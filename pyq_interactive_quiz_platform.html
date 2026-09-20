@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="documentTitle">Thermal Physics - Interactive PYQ Assessment</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- MathJax Configuration for LaTeX formatting -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      svg: {
+        fontCache: 'global'
+      },
+      startup: {
+        typeset: true
+      }
+    };
+  </script>
+  <script type="text/javascript" id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    
+    * {
+      font-family: 'Inter', sans-serif;
+      box-sizing: border-box;
+    }
+
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* NTA Style Palette Shapes & Colors */
+    .status-not-visited {
+      background-color: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+    }
+    .status-not-answered {
+      background-color: #ef4444;
+      color: #ffffff;
+      clip-path: polygon(0 0, 100% 0, 100% 75%, 50% 100%, 0 75%);
+    }
+    .status-answered {
+      background-color: #22c55e;
+      color: #ffffff;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 100%, 0 100%, 0 25%);
+    }
+    .status-marked {
+      background-color: #8b5cf6;
+      color: #ffffff;
+      border-radius: 50% !important;
+    }
+    .status-marked-answered {
+      background-color: #8b5cf6;
+      color: #ffffff;
+      border-radius: 50% !important;
+      position: relative;
+    }
+    .status-marked-answered::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      width: 8px;
+      height: 8px;
+      background-color: #22c55e;
+      border-radius: 50%;
+      border: 1px solid #ffffff;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 text-slate-900 min-h-screen flex flex-col antialiased selection:bg-blue-100 selection:text-blue-900">
+
+  <header class="bg-slate-900 text-white border-b-4 border-amber-500 shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between">
+      
+      <!-- Brand & Title Block -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center text-xl font-bold shadow">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div>
+          <h1 id="topDynamicTitle" class="text-base sm:text-lg font-bold tracking-tight text-white leading-tight">
+            Thermal Physics Assessment
+          </h1>
+          <p id="topDynamicSubtitle" class="text-xs text-slate-300 font-medium">
+            Previous Year Questions (PYQ) Practice & CBT Simulation
+          </p>
+        </div>
+      </div>
+
+      <!-- Mode Selector & Exam Timer Controls -->
+      <div class="flex items-center space-x-2 sm:space-x-4">
+        <!-- Mode Switcher -->
+        <div class="bg-slate-800 p-1 rounded-xl flex items-center border border-slate-700 text-xs font-semibold">
+          <button id="examModeBtn" onclick="switchMode('exam')" class="px-3 py-1.5 rounded-lg transition-all bg-blue-600 text-white shadow-sm flex items-center gap-1.5">
+            <i class="fa-solid fa-stopwatch"></i>
+            <span>Exam Mode</span>
+          </button>
+          <button id="practiceModeBtn" onclick="switchMode('practice')" class="px-3 py-1.5 rounded-lg transition-all text-slate-300 hover:text-white flex items-center gap-1.5">
+            <i class="fa-solid fa-book-open-reader"></i>
+            <span>Practice Mode</span>
+          </button>
+        </div>
+
+        <!-- Timer Card -->
+        <div id="examTimerCard" class="flex items-center space-x-2 bg-amber-500 text-slate-950 px-3 py-1.5 rounded-xl font-mono font-bold text-sm shadow">
+          <i class="fa-regular fa-clock animate-pulse"></i>
+          <span id="timerDisplay">45:00</span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <section class="bg-white border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-xs md:text-sm">
+      
+      <!-- Dynamic Subject Filter Dropdown -->
+      <div class="flex items-center space-x-2">
+        <label for="subjectFilterSelect" class="font-bold text-slate-700 flex items-center gap-1.5">
+          <i class="fa-solid fa-layer-group text-blue-600"></i>
+          <span>Section / Subject:</span>
+        </label>
+        <select id="subjectFilterSelect" onchange="handleSubjectFilterChange(this.value)" class="bg-slate-50 border border-slate-300 font-semibold text-slate-800 rounded-lg px-2.5 py-1 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+          <option value="ALL">All Sections (Full Syllabus)</option>
+        </select>
+      </div>
+
+      <!-- Quick Action Controls -->
+      <div class="flex items-center gap-3">
+        <!-- Negative Marking Selector -->
+        <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1 text-xs">
+          <span class="font-semibold text-slate-700 flex items-center">
+            <i class="fa-solid fa-scale-unbalanced text-amber-600 mr-1.5"></i> Negative Marking:
+          </span>
+          <button id="toggleNegativeMarkingBtn" onclick="toggleNegativeMarking()" type="button" class="px-2 py-0.5 rounded-md font-bold text-xs transition-all bg-rose-600 hover:bg-rose-700 text-white shadow-sm flex items-center gap-1">
+            <span id="negToggleStatus">ON (-0.25)</span>
+          </button>
+        </div>
+
+        <!-- Question Paper Preview Button -->
+        <button onclick="openQuestionPaperModal()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold border border-slate-300 transition flex items-center gap-1 text-xs">
+          <i class="fa-solid fa-list-check"></i>
+          <span>Question Paper</span>
+        </button>
+
+        <!-- Instructions Button -->
+        <button onclick="openInstructionsModal()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold border border-slate-300 transition flex items-center gap-1 text-xs">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>Instructions</span>
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+  <main class="max-w-7xl mx-auto px-4 py-4 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+    <!-- Left / Center Column: Question Display and Options Area -->
+    <div class="lg:col-span-8 flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      
+      <!-- Question Header -->
+      <div class="border-b border-slate-200 px-4 md:px-6 py-3 bg-slate-50 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="bg-blue-600 text-white font-bold text-xs md:text-sm px-3 py-1 rounded-md shadow-sm">
+            Question No. <span id="currentQuestionNumber">1</span>
+          </span>
+          <span id="activeSubjectBadge" class="bg-slate-200 text-slate-700 text-xs font-semibold px-2 py-1 rounded">
+            Thermal Physics
+          </span>
+        </div>
+
+        <div class="flex items-center space-x-3 text-xs">
+          <span class="text-emerald-700 font-semibold bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
+            <i class="fa-solid fa-plus mr-1"></i>Marking: +1
+          </span>
+          <span id="negativeMarkingDisplayBadge" class="text-rose-700 font-semibold bg-rose-50 px-2 py-1 rounded border border-rose-200">
+            <i class="fa-solid fa-minus mr-1"></i>Negative: -0.25
+          </span>
+        </div>
+      </div>
+
+      <!-- Question and Options Area -->
+      <div class="p-4 md:p-6 flex-1 overflow-y-auto space-y-6">
+        
+        <!-- Question Text Block -->
+        <div class="text-sm md:text-base font-semibold text-slate-900 leading-relaxed bg-slate-50/70 p-4 rounded-xl border border-slate-200" id="questionTextContainer">
+          <!-- Question LaTeX Content inserted here -->
+        </div>
+
+        <!-- Options Container -->
+        <div class="space-y-3" id="optionsContainer">
+          <!-- Dynamically Rendered Option Cards -->
+        </div>
+
+        <!-- Practice Mode Explanation Area -->
+        <div id="practiceFeedbackBox" class="hidden mt-6 bg-slate-50 rounded-xl p-4 border border-blue-200">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
+            <div class="flex items-center space-x-2 font-bold text-slate-800 text-sm">
+              <i class="fa-solid fa-lightbulb text-amber-500"></i>
+              <span>Step-by-Step Solution</span>
+            </div>
+            <span id="revealedStatusBadge" class="text-xs px-2 py-0.5 rounded font-bold"></span>
+          </div>
+          <div id="practiceExplanation" class="text-xs md:text-sm text-slate-700 leading-relaxed mb-4"></div>
+          
+          <!-- Detailed Option Breakdown -->
+          <div class="border-t border-slate-200 pt-3">
+            <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Detailed Option Analysis</h4>
+            <div id="practiceOptionBreakdown" class="space-y-2 text-xs"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer Action Buttons (NTA Standard Flow) -->
+      <div class="border-t border-slate-200 p-3 md:p-4 bg-slate-50 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="markForReviewAndNext()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-xs transition shadow-sm flex items-center gap-1.5">
+            <i class="fa-solid fa-flag"></i>
+            <span>Mark for Review & Next</span>
+          </button>
+          <button onclick="clearCurrentResponse()" class="px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg font-semibold text-xs transition flex items-center gap-1.5">
+            <i class="fa-solid fa-eraser"></i>
+            <span>Clear Response</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="navigateQuestion(-1)" id="prevBtn" class="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-semibold text-xs transition flex items-center gap-1">
+            <i class="fa-solid fa-angle-left"></i>
+            <span>Previous</span>
+          </button>
+          <button onclick="saveAndNext()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition shadow-sm flex items-center gap-1.5">
+            <span>Save & Next</span>
+            <i class="fa-solid fa-angle-right"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="lg:col-span-4 flex flex-col space-y-4">
+      
+      <!-- Palette Container Card -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col h-full">
+        
+        <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-3">
+          <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+            <i class="fa-solid fa-table-cells-large text-blue-600"></i>
+            <span>Question Palette</span>
+          </h3>
+          <span class="text-xs bg-slate-100 text-slate-600 font-semibold px-2 py-0.5 rounded">
+            Total: <span id="paletteTotalQuestions">30</span>
+          </span>
+        </div>
+
+        <!-- Official Status Legend Cards -->
+        <div class="grid grid-cols-2 gap-2 text-[11px] mb-4 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded flex items-center justify-center font-bold text-xs status-answered shadow-xs">
+              <span id="legendAnsweredCount">0</span>
+            </div>
+            <span class="text-slate-600 font-medium">Answered</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded flex items-center justify-center font-bold text-xs status-not-answered shadow-xs">
+              <span id="legendNotAnsweredCount">0</span>
+            </div>
+            <span class="text-slate-600 font-medium">Not Answered</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs status-not-visited">
+              <span id="legendNotVisitedCount">30</span>
+            </div>
+            <span class="text-slate-600 font-medium">Not Visited</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs status-marked">
+              <span id="legendMarkedCount">0</span>
+            </div>
+            <span class="text-slate-600 font-medium">Marked for Review</span>
+          </div>
+
+          <div class="flex items-center gap-2 col-span-2 pt-1 border-t border-slate-200/60">
+            <div class="w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs status-marked-answered">
+              <span id="legendMarkedAnsweredCount">0</span>
+            </div>
+            <span class="text-slate-600 font-medium">Answered & Marked for Review</span>
+          </div>
+        </div>
+
+        <!-- Question Number Buttons Grid -->
+        <div class="border border-slate-200 rounded-xl p-3 bg-slate-50/50 flex-1 max-h-72 overflow-y-auto">
+          <div id="paletteGrid" class="grid grid-cols-5 gap-2 text-center">
+            <!-- Palette Buttons dynamically rendered here -->
+          </div>
+        </div>
+
+        <!-- Exam Final Submission Trigger -->
+        <div class="pt-4 border-t border-slate-200 mt-4">
+          <button onclick="promptSubmitExam()" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-2.5 px-4 rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>Submit Assessment</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  
+  <!-- Instructions Modal -->
+  <div id="instructionsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="bg-slate-900 text-white p-4 flex items-center justify-between">
+        <h3 class="font-bold text-base flex items-center gap-2">
+          <i class="fa-solid fa-circle-info text-amber-500"></i>
+          <span>Assessment Instructions</span>
+        </h3>
+        <button onclick="closeInstructionsModal()" class="text-slate-400 hover:text-white text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="p-5 overflow-y-auto space-y-4 text-xs md:text-sm text-slate-600 leading-relaxed">
+        <h4 class="font-bold text-slate-800 text-sm">General Instructions:</h4>
+        <ul class="list-disc pl-5 space-y-1.5">
+          <li>The countdown timer at the top right display shows the remaining time for the test.</li>
+          <li>Default examination duration is set to 45 minutes for this batch.</li>
+          <li>Each question carries <strong>+1 mark</strong> for a correct answer.</li>
+          <li>If Negative Marking is enabled, <strong>-0.25 marks</strong> will be deducted for every incorrect response. If disabled, 0 marks are deducted.</li>
+          <li>You can switch between <strong>Exam Mode</strong> and <strong>Practice Mode</strong> at any point from the top bar.</li>
+        </ul>
+        <h4 class="font-bold text-slate-800 text-sm">Navigating & Saving Answers:</h4>
+        <ul class="list-disc pl-5 space-y-1.5">
+          <li>Click <strong>Save & Next</strong> to record your response and proceed to the next question.</li>
+          <li>Click <strong>Mark for Review & Next</strong> to flag the question for re-evaluation.</li>
+          <li>Click <strong>Clear Response</strong> to remove any selected option.</li>
+        </ul>
+      </div>
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+        <button onclick="closeInstructionsModal()" class="px-5 py-2 bg-blue-600 text-white font-bold rounded-lg text-xs hover:bg-blue-700 transition">
+          I Understand
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full Question Paper View Modal -->
+  <div id="questionPaperModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-4xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="bg-slate-900 text-white p-4 flex items-center justify-between">
+        <h3 class="font-bold text-base flex items-center gap-2">
+          <i class="fa-solid fa-book-open text-amber-500"></i>
+          <span>Full Question Paper Overview</span>
+        </h3>
+        <button onclick="closeQuestionPaperModal()" class="text-slate-400 hover:text-white text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="p-5 overflow-y-auto space-y-5" id="paperOverviewList">
+        <!-- Dynamically rendered full question list -->
+      </div>
+      <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
+        <button onclick="closeQuestionPaperModal()" class="px-4 py-2 bg-slate-700 text-white font-semibold rounded-lg text-xs hover:bg-slate-800 transition">
+          Close Overview
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Final Confirmation Submit Modal -->
+  <div id="submitConfirmationModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 text-center">
+      <div class="w-14 h-14 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 class="text-base font-bold text-slate-900">Ready to Submit?</h3>
+      <p class="text-xs text-slate-600 mt-2">
+        Once submitted, your final score and subject-wise accuracy report will be generated.
+      </p>
+
+      <div class="grid grid-cols-2 gap-3 my-4 text-xs font-semibold text-left bg-slate-50 p-3 rounded-xl border border-slate-200">
+        <div>Answered: <span class="text-emerald-600 font-bold" id="confirmAnsweredCount">0</span></div>
+        <div>Not Answered: <span class="text-rose-600 font-bold" id="confirmNotAnsweredCount">0</span></div>
+        <div>Marked for Review: <span class="text-purple-600 font-bold" id="confirmMarkedCount">0</span></div>
+        <div>Not Visited: <span class="text-slate-500 font-bold" id="confirmNotVisitedCount">0</span></div>
+      </div>
+
+      <div class="flex items-center justify-center gap-3 mt-5">
+        <button onclick="toggleSubmitModal(false)" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold transition">
+          Continue Test
+        </button>
+        <button onclick="finalizeExamSubmission()" class="px-5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-bold transition shadow">
+          Yes, Submit Final Test
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Score & Comprehensive Result Report Modal -->
+  <div id="resultModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      
+      <!-- Result Header -->
+      <div class="bg-gradient-to-r from-blue-900 to-indigo-950 text-white p-6 text-center relative">
+        <div class="w-16 h-16 bg-amber-500 text-slate-950 rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-lg mb-3">
+          <i class="fa-solid fa-trophy"></i>
+        </div>
+        <h2 class="text-xl md:text-2xl font-black tracking-tight" id="resultModalHeaderTitle">Thermal Physics Assessment Summary</h2>
+        <p class="text-xs text-blue-200 mt-1">Official Candidate Performance Report</p>
+      </div>
+
+      <!-- Result Body -->
+      <div class="p-6 overflow-y-auto space-y-6">
+        
+        <!-- Score Highlights Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-xl text-center">
+            <div class="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Final Score</div>
+            <div class="text-2xl font-extrabold text-indigo-950 mt-1" id="reportScore">0 / 30</div>
+            <div class="text-[11px] text-indigo-500 mt-0.5" id="reportPercentage">0%</div>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-xl text-center">
+            <div class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Correct</div>
+            <div class="text-2xl font-extrabold text-emerald-700 mt-1" id="reportCorrect">0</div>
+            <div class="text-[11px] text-emerald-600 mt-0.5">+1 mark each</div>
+          </div>
+          <div class="bg-rose-50 border border-rose-100 p-4 rounded-xl text-center">
+            <div class="text-xs font-semibold text-rose-600 uppercase tracking-wider">Incorrect</div>
+            <div class="text-2xl font-extrabold text-rose-700 mt-1" id="reportIncorrect">0</div>
+            <div class="text-[11px] text-rose-500 mt-0.5" id="reportNegativeRuleText">-0.25 negative each</div>
+          </div>
+          <div class="bg-amber-50 border border-amber-100 p-4 rounded-xl text-center">
+            <div class="text-xs font-semibold text-amber-600 uppercase tracking-wider">Accuracy</div>
+            <div class="text-2xl font-extrabold text-amber-800 mt-1" id="reportAccuracy">0%</div>
+            <div class="text-[11px] text-amber-600 mt-0.5">Attempt efficiency</div>
+          </div>
+        </div>
+
+        <!-- Detailed Section Breakdown Table -->
+        <div>
+          <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Subject Performance Breakdown</h4>
+          <div class="border border-slate-200 rounded-xl overflow-hidden">
+            <table class="w-full text-left text-xs text-slate-600">
+              <thead class="bg-slate-50 font-bold text-slate-800 border-b border-slate-200">
+                <tr>
+                  <th class="p-3">Section</th>
+                  <th class="p-3">Questions</th>
+                  <th class="p-3">Attempted</th>
+                  <th class="p-3 text-emerald-600">Correct</th>
+                  <th class="p-3 text-rose-600">Wrong</th>
+                  <th class="p-3 text-blue-700">Net Score</th>
+                </tr>
+              </thead>
+              <tbody id="subjectReportTableBody">
+                <!-- Populated via script -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Result Footer -->
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <button onclick="resetExamProgress()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg text-xs transition flex items-center gap-1.5">
+          <i class="fa-solid fa-rotate-left"></i>
+          <span>Retake Assessment</span>
+        </button>
+
+        <button onclick="closeResultModalAndReview()" class="px-5 py-2 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded-lg text-xs transition shadow flex items-center gap-1.5">
+          <i class="fa-solid fa-book-open"></i>
+          <span>Review Answers with Solutions</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Initial Startup Alert Modal: Marking Scheme Choice -->
+  <div id="markingSchemeAlertModal" class="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-200">
+      
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 text-white p-5 flex items-center justify-between border-b-2 border-amber-500">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500 text-blue-950 flex items-center justify-center text-lg font-bold shadow">
+            <i class="fa-solid fa-bell"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base md:text-lg">Examination Setup Notice</h3>
+            <p class="text-xs text-blue-200">Select your preferred marking scheme</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 space-y-5">
+        <p class="text-xs md:text-sm text-slate-600 leading-relaxed">
+          Welcome to the assessment session. Please choose whether you want to attempt this test with <span class="font-bold text-slate-800">negative marking</span> enabled:
+        </p>
+
+        <!-- Option Selection Cards -->
+        <div class="space-y-3">
+          <!-- Option 1: Standard Negative Marking -->
+          <label class="flex items-start p-3.5 rounded-xl border-2 border-indigo-500 bg-indigo-50/50 cursor-pointer transition hover:bg-indigo-50" id="schemeOptionWithNegativeLabel">
+            <input type="radio" name="initial_scheme_choice" value="yes" checked onchange="handleSchemeModalSelection(true)" class="mt-1 w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-slate-300">
+            <div class="ml-3">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-sm text-slate-800">Enable Negative Marking</span>
+                <span class="bg-rose-100 text-rose-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">-0.25 Penalty</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">
+                Standard CBT scheme: <span class="font-semibold text-emerald-600">+1.00</span> for correct answers and <span class="font-semibold text-rose-600">-0.25</span> penalty for wrong answers.
+              </p>
+            </div>
+          </label>
+
+          <!-- Option 2: No Negative Marking -->
+          <label class="flex items-start p-3.5 rounded-xl border-2 border-slate-200 bg-white cursor-pointer transition hover:bg-slate-50" id="schemeOptionNoNegativeLabel">
+            <input type="radio" name="initial_scheme_choice" value="no" onchange="handleSchemeModalSelection(false)" class="mt-1 w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-slate-300">
+            <div class="ml-3">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-sm text-slate-800">No Negative Marking</span>
+                <span class="bg-emerald-100 text-emerald-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">0 Penalty</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">
+                Zero penalty scheme: <span class="font-semibold text-emerald-600">+1.00</span> for correct answers and <span class="font-semibold text-slate-600">0.00</span> deducted for wrong answers.
+              </p>
+            </div>
+          </label>
+        </div>
+
+        <div class="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex items-center gap-2">
+          <i class="fa-solid fa-circle-info text-blue-500"></i>
+          <span>You can also adjust this setting anytime during the test via the top navigation bar.</span>
+        </div>
+
+        <!-- Confirm Button -->
+        <div class="pt-2">
+          <button onclick="confirmInitialMarkingScheme()" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-2.5 px-4 rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm">
+            <span>Proceed to Examination</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="toastNotification" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-xl border border-slate-700 text-xs font-semibold flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+    <i class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toastMessage">Notification</span>
+  </div>
+
+  <script>
+    /**
+     * QUESTION DATABASE - BATCH 1: QUESTIONS 1 TO 30
+     * Extracted directly from Unit 2: Thermal Physics - Part 2
+     */
+    const QUESTION_DATABASE = [
+      {
+        id: 1,
+        subject: "Thermal Physics",
+        question: "During an isothermal expansion of an ideal gas, the change in internal energy ($\\Delta U$) is:",
+        options: [
+          "Positive",
+          "Negative",
+          "Zero",
+          "Dependent on the work done"
+        ],
+        answer: 2,
+        explanation: "For an ideal gas, internal energy is solely a function of temperature: $U = f(T)$. In an isothermal process, the temperature remains constant ($\\Delta T = 0$), so the change in internal energy is $\\Delta U = n C_v \\Delta T = 0$.",
+        feedback: [
+          "A — Incorrect. Internal energy increases only if temperature increases.",
+          "B — Incorrect. Internal energy decreases only if temperature drops.",
+          "C — Correct. Since temperature is strictly constant in an isothermal process, $\\Delta U = 0$.",
+          "D — Incorrect. For an ideal gas, $\\Delta U$ depends strictly on temperature change, not on path work."
+        ]
+      },
+      {
+        id: 2,
+        subject: "Thermal Physics",
+        question: "For an isothermal process, the first law of thermodynamics becomes:",
+        options: [
+          "$\\Delta Q = \\Delta W$",
+          "$\\Delta Q = \\Delta U$",
+          "$\\Delta U = -\\Delta W$",
+          "$\\Delta Q = 0$"
+        ],
+        answer: 0,
+        explanation: "The First Law of Thermodynamics is given by $\\Delta Q = \\Delta U + \\Delta W$. In an isothermal process for an ideal gas, $\\Delta U = 0$. Substituting this gives $\\Delta Q = \\Delta W$.",
+        feedback: [
+          "A — Correct. Because $\\Delta U = 0$, all absorbed heat is directly converted into external work: $\\Delta Q = \\Delta W$.",
+          "B — Incorrect. $\\Delta Q = \\Delta U$ applies to an isochoric process where $\\Delta W = 0$.",
+          "C — Incorrect. $\\Delta U = -\\Delta W$ represents an adiabatic process where $\\Delta Q = 0$.",
+          "D — Incorrect. $\\Delta Q = 0$ corresponds to an adiabatic process."
+        ]
+      },
+      {
+        id: 3,
+        subject: "Thermal Physics",
+        question: "For an isochoric process, the work done is:",
+        options: [
+          "$P \\Delta V$",
+          "Zero",
+          "$nRT \\ln\\left(\\frac{V_2}{V_1}\\right)$",
+          "$C_P \\Delta T$"
+        ],
+        answer: 1,
+        explanation: "An isochoric process takes place at constant volume ($V = \\text{constant}$). Hence, $dV = 0$. The mechanical boundary work done is $W = \\int P dV = P(0) = 0$.",
+        feedback: [
+          "A — Incorrect. $P \\Delta V$ is the work done in an isobaric (constant pressure) process.",
+          "B — Correct. Work done $W = \\int P dV = 0$ because $dV = 0$ at constant volume.",
+          "C — Incorrect. This formula represents the work done during a reversible isothermal expansion.",
+          "D — Incorrect. $C_P \\Delta T$ represents heat supplied at constant pressure per mole."
+        ]
+      },
+      {
+        id: 4,
+        subject: "Thermal Physics",
+        question: "A process occurring infinitely slowly is called:",
+        options: [
+          "Adiabatic",
+          "Quasi-static",
+          "Isobaric",
+          "Irreversible"
+        ],
+        answer: 1,
+        explanation: "A quasi-static process is an idealized thermodynamic process that occurs at an infinitely slow rate such that the system remains in thermodynamic equilibrium with its surroundings at every infinitesimal step.",
+        feedback: [
+          "A — Incorrect. An adiabatic process is one where no heat is transferred, and it can occur rapidly or slowly.",
+          "B — Correct. By definition, a quasi-static process occurs infinitely slowly so that equilibrium is preserved.",
+          "C — Incorrect. An isobaric process occurs at constant pressure and does not specify speed.",
+          "D — Incorrect. Irreversible processes typically occur spontaneously at finite non-zero rates."
+        ]
+      },
+      {
+        id: 5,
+        subject: "Thermal Physics",
+        question: "The entropy of the universe tends to:",
+        options: [
+          "Decrease",
+          "Remain constant",
+          "Increase",
+          "Vary randomly"
+        ],
+        answer: 2,
+        explanation: "According to the Second Law of Thermodynamics (Clausius formulation / Principle of Entropy Increase), spontaneous or irreversible natural processes always result in a net increase in the total entropy of the universe ($\\Delta S_{\\text{universe}} > 0$).",
+        feedback: [
+          "A — Incorrect. Entropy of an isolated system never spontaneously decreases.",
+          "B — Incorrect. Entropy remains constant only for an idealized, completely reversible cyclic process.",
+          "C — Correct. All spontaneous natural processes are irreversible, driving $\\Delta S_{\\text{universe}} > 0$.",
+          "D — Incorrect. Entropy exhibits a definite unidirectional increase (the thermodynamic arrow of time)."
+        ]
+      },
+      {
+        id: 6,
+        subject: "Thermal Physics",
+        question: "The coefficient of performance (COP) of a refrigerator is always:",
+        options: [
+          "> 1",
+          "< 1",
+          "= 1",
+          "Zero"
+        ],
+        answer: 0,
+        explanation: "The coefficient of performance of a refrigerator is $\\text{COP} = \\frac{Q_2}{W} = \\frac{T_2}{T_1 - T_2}$. For standard operational temperature ranges (such as domestic refrigeration), $\\text{COP}$ is typically well above unity (often between 2 and 6).",
+        feedback: [
+          "A — Correct. As designated in textbook formulations for typical operating conditions, $\\text{COP} > 1$.",
+          "B — Incorrect. Unlike heat engine thermal efficiency $\\eta < 1$, COP is not bounded by 1.",
+          "C — Incorrect. COP varies with source and sink temperatures and is not fixed at 1.",
+          "D — Incorrect. A working refrigerator performs non-zero cooling with finite work input."
+        ]
+      },
+      {
+        id: 7,
+        subject: "Thermal Physics",
+        question: "A Carnot cycle consists of:",
+        options: [
+          "Two isothermals and two isobars",
+          "Two adiabatics and two isothermals",
+          "Two isochores and two isothermals",
+          "Two isobars and two adiabatics"
+        ],
+        answer: 1,
+        explanation: "A standard Carnot cycle consists of four reversible stages in sequence: 1. Isothermal expansion, 2. Adiabatic expansion, 3. Isothermal compression, and 4. Adiabatic compression.",
+        feedback: [
+          "A — Incorrect. The cycle contains no isobaric stages.",
+          "B — Correct. It comprises two reversible isothermal operations and two reversible adiabatic operations.",
+          "C — Incorrect. An engine with two isochores and two isothermals is a Stirling cycle.",
+          "D — Incorrect. An engine cycle with two isobars and two adiabatics is a Brayton/Joule cycle."
+        ]
+      },
+      {
+        id: 8,
+        subject: "Thermal Physics",
+        question: "The slope of an isothermal curve on a P-V diagram is:",
+        options: [
+          "More steeper than adiabatic",
+          "Less steep than adiabatic",
+          "Equal to adiabatic",
+          "Zero"
+        ],
+        answer: 1,
+        explanation: "For an isothermal process, $PV = \\text{const} \\implies \\left(\\frac{dP}{dV}\\right)_{\\text{iso}} = -\\frac{P}{V}$. For an adiabatic process, $PV^\\gamma = \\text{const} \\implies \\left(\\frac{dP}{dV}\\right)_{\\text{adi}} = -\\gamma \\frac{P}{V}$. Since $\\gamma > 1$, the adiabatic curve is $\\gamma$ times steeper; hence the isothermal slope is less steep.",
+        feedback: [
+          "A — Incorrect. The adiabatic curve is steeper by a factor of $\\gamma$.",
+          "B — Correct. The isothermal slope magnitude is $\\frac{P}{V}$, which is less steep than the adiabatic slope $\\gamma \\frac{P}{V}$.",
+          "C — Incorrect. They are equal only if $\\gamma = 1$, which does not occur for real/ideal gases.",
+          "D — Incorrect. Slope is negative and non-zero on a P-V indicator diagram."
+        ]
+      },
+      {
+        id: 9,
+        subject: "Thermal Physics",
+        question: "A Carnot engine operates between 500 K and 300 K. Its efficiency is:",
+        options: [
+          "20%",
+          "40%",
+          "60%",
+          "80%"
+        ],
+        answer: 1,
+        explanation: "Efficiency of a Carnot engine is $\\eta = 1 - \\frac{T_2}{T_1} = 1 - \\frac{300}{500} = 1 - 0.6 = 0.4$, which equals $40\\%$.",
+        feedback: [
+          "A — Incorrect. Recalculate using $\\eta = 1 - (300/500)$.",
+          "B — Correct. $\\eta = 1 - \\frac{300}{500} = 0.40 = 40\\%$.",
+          "C — Incorrect. $60\\%$ represents the heat rejected ratio ($T_2/T_1 = 0.60$), not the efficiency.",
+          "D — Incorrect. Overestimation of Carnot efficiency."
+        ]
+      },
+      {
+        id: 10,
+        subject: "Thermal Physics",
+        question: "For an adiabatic expansion, if $P_1 V_1^\\gamma = P_2 V_2^\\gamma$ and $V_2 = 2V_1$, then $P_2 = $",
+        options: [
+          "$P_1 / 2$",
+          "$P_1 / 2^\\gamma$",
+          "$2 P_1$",
+          "$P_1$"
+        ],
+        answer: 1,
+        explanation: "From $P_1 V_1^\\gamma = P_2 V_2^\\gamma$, we have $P_2 = P_1 \\left(\\frac{V_1}{V_2}\\right)^\\gamma$. Given $V_2 = 2V_1$, we substitute to obtain $P_2 = P_1 \\left(\\frac{V_1}{2V_1}\\right)^\\gamma = \\frac{P_1}{2^\\gamma}$.",
+        feedback: [
+          "A — Incorrect. $P_1/2$ would be true only if $\\gamma = 1$ (an isothermal expansion).",
+          "B — Correct. Substituting $V_2 = 2V_1$ gives $P_2 = P_1 / 2^\\gamma$.",
+          "C — Incorrect. In an expansion, pressure decreases, not increases.",
+          "D — Incorrect. Pressure must decrease during expansion."
+        ]
+      },
+      {
+        id: 11,
+        subject: "Thermal Physics",
+        question: "A refrigerator with $\\text{COP} = 5$ extracts 1000 J of heat. The work input is:",
+        options: [
+          "200 J",
+          "500 J",
+          "1000 J",
+          "5000 J"
+        ],
+        answer: 0,
+        explanation: "The coefficient of performance is defined as $\\text{COP} = \\frac{Q_{\\text{extracted}}}{W}$. Therefore, $W = \\frac{Q_{\\text{extracted}}}{\\text{COP}} = \\frac{1000\\text{ J}}{5} = 200\\text{ J}$.",
+        feedback: [
+          "A — Correct. $W = \\frac{Q_2}{\\text{COP}} = \\frac{1000}{5} = 200\\text{ J}$.",
+          "B — Incorrect. Calculation error.",
+          "C — Incorrect. That would imply $\\text{COP} = 1$.",
+          "D — Incorrect. 5000 J is the result of multiplying rather than dividing by COP."
+        ]
+      },
+      {
+        id: 12,
+        subject: "Thermal Physics",
+        question: "The change in internal energy for an isochoric process where $Q = 50\\text{ J}$ is:",
+        options: [
+          "0 J",
+          "50 J",
+          "-50 J",
+          "100 J"
+        ],
+        answer: 1,
+        explanation: "By the First Law of Thermodynamics, $\\Delta U = Q - W$. For an isochoric process, $W = 0$. Therefore, $\\Delta U = Q = 50\\text{ J}$.",
+        feedback: [
+          "A — Incorrect. $\\Delta U = 0$ corresponds to an isothermal process.",
+          "B — Correct. Since $W = 0$ at constant volume, $\\Delta U = Q = 50\\text{ J}$.",
+          "C — Incorrect. Heat is absorbed, so change in internal energy is positive.",
+          "D — Incorrect. No work is added or extracted to double the energy."
+        ]
+      },
+      {
+        id: 13,
+        subject: "Thermal Physics",
+        question: "A gas does 100 J of work in an isothermal expansion. The heat absorbed is:",
+        options: [
+          "0 J",
+          "50 J",
+          "100 J",
+          "200 J"
+        ],
+        answer: 2,
+        explanation: "In an isothermal expansion of an ideal gas, $\\Delta T = 0 \\implies \\Delta U = 0$. From the First Law $\\Delta Q = \\Delta U + W = 0 + 100\\text{ J} = 100\\text{ J}$.",
+        feedback: [
+          "A — Incorrect. Heat absorbed is zero in an adiabatic process.",
+          "B — Incorrect. Energy must be conserved; full work must be matched by heat.",
+          "C — Correct. In an isothermal process, $Q = W = 100\\text{ J}$ because $\\Delta U = 0$.",
+          "D — Incorrect. Violates conservation of energy."
+        ]
+      },
+      {
+        id: 14,
+        subject: "Thermal Physics",
+        question: "A \"perpetual motion machine of the second kind\" would violate the:",
+        options: [
+          "First Law of Thermodynamics",
+          "Second Law of Thermodynamics",
+          "Third Law of Thermodynamics",
+          "Zeroth Law of Thermodynamics"
+        ],
+        answer: 1,
+        explanation: "A perpetual motion machine of the second kind (PMM2) converts heat completely into mechanical work in a cycle without rejecting any heat to a lower temperature sink. This violates Kelvin-Planck's statement of the Second Law of Thermodynamics.",
+        feedback: [
+          "A — Incorrect. PMM1 creates energy from nothing, violating the First Law.",
+          "B — Correct. PMM2 completely converts heat from a single reservoir into work without heat rejection, directly violating the Second Law.",
+          "C — Incorrect. The Third Law concerns absolute zero entropy.",
+          "D — Incorrect. The Zeroth Law defines temperature equilibrium."
+        ]
+      },
+      {
+        id: 15,
+        subject: "Thermal Physics",
+        question: "An ideal gas is taken from state A to state B through two different paths, 1 and 2. The change in internal energy:",
+        options: [
+          "is greater for path 1",
+          "is greater for path 2",
+          "is the same for both paths",
+          "depends on the work done"
+        ],
+        answer: 2,
+        explanation: "Internal energy $U$ is a state function. Its value depends strictly on the initial and final thermodynamic equilibrium states of the system ($A$ and $B$) and is completely independent of the path taken: $\\Delta U_1 = \\Delta U_2 = U_B - U_A$.",
+        feedback: [
+          "A — Incorrect. Internal energy is not path-dependent.",
+          "B — Incorrect. Internal energy does not depend on path trajectory.",
+          "C — Correct. Internal energy is a state function; hence $\\Delta U$ is identical for any path between states A and B.",
+          "D — Incorrect. Work and heat are path functions, but their difference $\\Delta U = Q - W$ is invariant."
+        ]
+      },
+      {
+        id: 16,
+        subject: "Thermal Physics",
+        question: "In a cyclic process, the net change in internal energy is:",
+        options: [
+          "Positive",
+          "Negative",
+          "Zero",
+          "Infinite"
+        ],
+        answer: 2,
+        explanation: "Because internal energy $U$ is a state variable, the initial state and final state in a closed cyclic process are identical. Therefore, $\\oint dU = \\Delta U = U_{\\text{final}} - U_{\\text{initial}} = 0$.",
+        feedback: [
+          "A — Incorrect. The system returns to its original thermodynamic state.",
+          "B — Incorrect. Internal energy cannot change net over a complete closed cycle.",
+          "C — Correct. For any complete cyclic path, $\\oint dU = 0$.",
+          "D — Incorrect. Internal energy is finite and unchanged over a full cycle."
+        ]
+      },
+      {
+        id: 17,
+        subject: "Thermal Physics",
+        question: "The Second Law of Thermodynamics states that heat cannot flow spontaneously from:",
+        options: [
+          "Hot to cold",
+          "Cold to hot",
+          "High pressure to low pressure",
+          "Low volume to high volume"
+        ],
+        answer: 1,
+        explanation: "According to Clausius' statement of the Second Law of Thermodynamics: It is impossible for heat to transfer spontaneously from a body at a lower temperature to a body at a higher temperature without external work input.",
+        feedback: [
+          "A — Incorrect. Heat flows naturally and spontaneously from hot bodies to cold bodies.",
+          "B — Correct. Spontaneous heat transfer from cold to hot requires an external energy input (like in a refrigerator).",
+          "C — Incorrect. Matter or fluid flows spontaneously from high pressure to low pressure.",
+          "D — Incorrect. Relates to gas expansion, not the thermal Clausius statement."
+        ]
+      },
+      {
+        id: 18,
+        subject: "Thermal Physics",
+        question: "The Zeroth Law establishes the concept of:",
+        options: [
+          "Energy conservation",
+          "Thermal equilibrium",
+          "Entropy",
+          "Heat engines"
+        ],
+        answer: 1,
+        explanation: "The Zeroth Law states that if two systems are each in thermal equilibrium with a third system, they are in thermal equilibrium with each other. This provides the mathematical basis for defining temperature and thermal equilibrium.",
+        feedback: [
+          "A — Incorrect. Conservation of energy is formulated by the First Law.",
+          "B — Correct. The Zeroth Law formally defines thermal equilibrium and justifies temperature measurement.",
+          "C — Incorrect. Entropy is introduced and established by the Second Law.",
+          "D — Incorrect. Heat engines are treated in the Second Law."
+        ]
+      },
+      {
+        id: 19,
+        subject: "Thermal Physics",
+        question: "Which process is characterized by no heat exchange?",
+        options: [
+          "Adiabatic",
+          "Isothermal",
+          "Isobaric",
+          "Isochoric"
+        ],
+        answer: 0,
+        explanation: "An adiabatic process is one that occurs without any transfer of heat or mass between the thermodynamic system and its surroundings ($\\Delta Q = 0$).",
+        feedback: [
+          "A — Correct. An adiabatic process is insulated against heat transfer: $\\Delta Q = 0$.",
+          "B — Incorrect. An isothermal process has $\\Delta T = 0$, but heat transfer is non-zero.",
+          "C — Incorrect. An isobaric process occurs at constant pressure with active heat transfer.",
+          "D — Incorrect. An isochoric process occurs at constant volume with active heat transfer."
+        ]
+      },
+      {
+        id: 20,
+        subject: "Thermal Physics",
+        question: "The entropy of an isolated system always:",
+        options: [
+          "Increases or remains constant",
+          "Decreases",
+          "Becomes zero",
+          "Fluctuates randomly"
+        ],
+        answer: 0,
+        explanation: "For an isolated system, no energy or matter enters or leaves. By the Second Law of Thermodynamics: $\\Delta S \\ge 0$. The entropy increases in irreversible processes and remains constant in reversible processes.",
+        feedback: [
+          "A — Correct. For any isolated system, $\\Delta S \\ge 0$ (increases for irreversible, constant for reversible).",
+          "B — Incorrect. Entropy cannot decrease spontaneously in an isolated system.",
+          "C — Incorrect. Entropy becomes zero only for a perfect crystal at absolute zero (Third Law).",
+          "D — Incorrect. Entropy changes follow a strict thermodynamic directionality."
+        ]
+      },
+      {
+        id: 21,
+        subject: "Thermal Physics",
+        question: "On a T-S diagram, an isothermal process is represented by a:",
+        options: [
+          "Horizontal line",
+          "Vertical line",
+          "Curved line",
+          "Diagonal line"
+        ],
+        answer: 0,
+        explanation: "On a Temperature-Entropy ($T-S$) plot, the vertical axis represents Temperature ($T$). Because an isothermal process occurs at constant temperature ($T = \\text{const}$), it plots as a straight horizontal line parallel to the entropy axis.",
+        feedback: [
+          "A — Correct. Temperature is constant on the y-axis, yielding a horizontal line.",
+          "B — Incorrect. A vertical line on a T-S diagram represents a constant-entropy (isentropic / reversible adiabatic) process.",
+          "C — Incorrect. Curved lines represent polytropic, isobaric, or isochoric processes on a T-S plane.",
+          "D — Incorrect. Diagonal lines correspond to processes where $T$ varies linearly with $S$."
+        ]
+      },
+      {
+        id: 22,
+        subject: "Thermal Physics",
+        question: "The area under a T-S diagram represents:",
+        options: [
+          "Heat transfer",
+          "Work done",
+          "Pressure change",
+          "Internal energy"
+        ],
+        answer: 0,
+        explanation: "From the definition of entropy $dS = \\frac{\\delta Q_{\\text{rev}}}{T}$, we have $\\delta Q_{\\text{rev}} = T dS$. Integrating gives $Q = \\int T dS$, which is precisely the area under the curve on a $T-S$ diagram.",
+        feedback: [
+          "A — Correct. Area under a reversible curve on a T-S diagram represents heat transferred: $Q = \\int T dS$.",
+          "B — Incorrect. Work done is the area under a curve on a P-V diagram ($W = \\int P dV$).",
+          "C — Incorrect. Pressure cannot be derived directly from the area under a T-S curve.",
+          "D — Incorrect. Internal energy depends on temperature, not the area under a T-S diagram."
+        ]
+      },
+      {
+        id: 23,
+        subject: "Thermal Physics",
+        question: "On a T-S diagram, the work done in a reversible cycle is equal to:",
+        options: [
+          "Area enclosed by the cycle",
+          "Slope of the curve",
+          "Entropy change",
+          "Temperature difference"
+        ],
+        answer: 0,
+        explanation: "For a complete reversible cycle, $\\oint dU = 0$, which means Net Work $W_{\\text{net}} = Q_{\\text{net}} = \\oint T dS$. Therefore, the net work done equals the area enclosed by the cycle on a $T-S$ plot.",
+        feedback: [
+          "A — Correct. In a reversible cycle, $W = Q_{\\text{net}} = \\oint T dS$, which is the enclosed area.",
+          "B — Incorrect. Slope represents temperature derivative with respect to entropy.",
+          "C — Incorrect. Net entropy change for any reversible cycle is identically zero.",
+          "D — Incorrect. It is proportional to temperature limits and entropy change, equaling the enclosed area."
+        ]
+      },
+      {
+        id: 24,
+        subject: "Thermal Physics",
+        question: "A real engine operating between $T_1$ and $T_2$ will always have efficiency _____ a Carnot engine.",
+        options: [
+          "Less than",
+          "Greater than",
+          "Equal to",
+          "Unrelated to"
+        ],
+        answer: 0,
+        explanation: "According to Carnot's theorem, no real heat engine operating between two given thermal reservoirs can be more efficient than a reversible Carnot engine operating between the same two temperatures. Due to unavoidable irreversibilities (friction, finite temperature heat transfer), real engines always have lower efficiency.",
+        feedback: [
+          "A — Correct. Irreversibilities and dissipative losses ensure real engine efficiency is strictly less than Carnot efficiency.",
+          "B — Incorrect. No heat engine can exceed Carnot efficiency (Carnot's theorem).",
+          "C — Incorrect. Real engines suffer from friction and cannot achieve ideal reversible efficiency.",
+          "D — Incorrect. Real engine performance is fundamentally benchmarked against Carnot limits."
+        ]
+      },
+      {
+        id: 25,
+        subject: "Thermal Physics",
+        question: "During adiabatic free expansion of an ideal gas, the temperature change is:",
+        options: [
+          "Positive",
+          "Negative",
+          "Zero",
+          "Undefined"
+        ],
+        answer: 2,
+        explanation: "In free expansion into a vacuum, no opposing force exists, so work done $W = 0$. Since the process is adiabatic, $Q = 0$. By the First Law, $\\Delta U = Q - W = 0$. For an ideal gas $U = f(T)$, $\\Delta U = 0$ implies $\\Delta T = 0$.",
+        feedback: [
+          "A — Incorrect. Gas does not heat up during free expansion.",
+          "B — Incorrect. For real gases (Joule-Thomson effect) cooling can occur, but for an ideal gas temperature remains unchanged.",
+          "C — Correct. Since $W = 0$ and $Q = 0$, $\\Delta U = 0$; therefore, for an ideal gas, $\\Delta T = 0$.",
+          "D — Incorrect. The initial and final equilibrium temperatures are well-defined and equal."
+        ]
+      },
+      {
+        id: 26,
+        subject: "Thermal Physics",
+        question: "Which law deals with the efficiency of heat engines?",
+        options: [
+          "First Law",
+          "Second Law",
+          "Third Law",
+          "Zeroth Law"
+        ],
+        answer: 1,
+        explanation: "The Second Law of Thermodynamics (Kelvin-Planck statement) establishes that no heat engine can convert all absorbed heat into work, establishing fundamental limits on engine efficiency.",
+        feedback: [
+          "A — Incorrect. The First Law establishes energy conservation ($Q = \\Delta U + W$), without imposing directional efficiency limits.",
+          "B — Correct. The Second Law dictates maximum thermal efficiency through the Kelvin-Planck statement and Carnot's theorem.",
+          "C — Incorrect. The Third Law governs behavior of entropy as absolute zero is approached.",
+          "D — Incorrect. The Zeroth Law establishes the concept of temperature."
+        ]
+      },
+      {
+        id: 27,
+        subject: "Thermal Physics",
+        question: "The equation $f(P,V,T) = 0$ is known as:",
+        options: [
+          "Equation of motion",
+          "Equation of state",
+          "Equation of energy",
+          "Equation of continuity"
+        ],
+        answer: 1,
+        explanation: "A mathematical relationship connecting state variables (Pressure $P$, Volume $V$, and Temperature $T$) for a given substance in thermodynamic equilibrium is called the Equation of State (e.g., $PV = nRT$ for ideal gases).",
+        feedback: [
+          "A — Incorrect. Equation of motion relates force, mass, and acceleration ($F = ma$).",
+          "B — Correct. Any formula expressing the relationship between $P$, $V$, and $T$ of a system is an Equation of State.",
+          "C — Incorrect. An energy equation expresses $U$ or $H$ as a function of thermodynamic state variables.",
+          "D — Incorrect. The continuity equation represents mass conservation in fluid dynamics."
+        ]
+      },
+      {
+        id: 28,
+        subject: "Thermal Physics",
+        question: "The third law of thermodynamics is also known as:",
+        options: [
+          "Nernst's theorem",
+          "Planck's hypothesis",
+          "Carnot's principle",
+          "Clausius' law"
+        ],
+        answer: 0,
+        explanation: "The Third Law of Thermodynamics was originally formulated by Walther Nernst in 1906 and is widely known as the Nernst Heat Theorem (which states that the entropy change of a reaction approaches zero as temperature approaches absolute zero).",
+        feedback: [
+          "A — Correct. The Third Law is formulated as Nernst's theorem / Nernst heat theorem.",
+          "B — Incorrect. Planck's hypothesis refers to quantized energy levels ($E = h\\nu$).",
+          "C — Incorrect. Carnot's principle describes maximum reversible heat engine efficiency.",
+          "D — Incorrect. Clausius' law represents statements of the Second Law or the Clausius inequality."
+        ]
+      },
+      {
+        id: 29,
+        subject: "Thermal Physics",
+        question: "Find the efficiency of the Carnot engine working between the steam point and the ice point.",
+        options: [
+          "26.71%",
+          "28.81%",
+          "26.81%",
+          "21.81%"
+        ],
+        answer: 2,
+        explanation: "The steam point is $T_1 = 100^\\circ\\text{C} = 373.15\\text{ K}$. The ice point is $T_2 = 0^\\circ\\text{C} = 273.15\\text{ K}$. Carnot efficiency $\\eta = 1 - \\frac{T_2}{T_1} = 1 - \\frac{273.15}{373.15} = 1 - 0.7319 = 0.2681 = 26.81\\%$.",
+        feedback: [
+          "A — Incorrect. Close approximation but off in decimal precision.",
+          "B — Incorrect. Calculation error using incorrect temperature values.",
+          "C — Correct. $\\eta = 1 - \\frac{273.15}{373.15} = 0.2681 = 26.81\\%$.",
+          "D — Incorrect. Calculation error."
+        ]
+      },
+      {
+        id: 30,
+        subject: "Thermal Physics",
+        question: "Two ends of a rod are kept at $127^\\circ\\text{C}$ and $227^\\circ\\text{C}$. When 2000 cal of heat flows in this rod, then the change in entropy is:",
+        options: [
+          "$1.0\\text{ cal/K}$",
+          "$20\\text{ cal/K}$",
+          "$6.9\\text{ cal/K}$",
+          "$0.7\\text{ cal/K}$"
+        ],
+        answer: 0,
+        explanation: "Source temperature $T_1 = 227^\\circ\\text{C} = 500\\text{ K}$, Sink temperature $T_2 = 127^\\circ\\text{C} = 400\\text{ K}$. Heat transfer $Q = 2000\\text{ cal}$. Change in entropy $\\Delta S = \\Delta S_{\\text{cold}} + \\Delta S_{\\text{hot}} = +\\frac{Q}{T_2} - \\frac{Q}{T_1} = \\frac{2000}{400} - \\frac{2000}{500} = 5 - 4 = 1.0\\text{ cal/K}$.",
+        feedback: [
+          "A — Correct. $\\Delta S = \\frac{2000}{400} - \\frac{2000}{500} = 5.0 - 4.0 = 1.0\\text{ cal/K}$.",
+          "B — Incorrect. Incorrect temperature unit conversion or formula.",
+          "C — Incorrect. Calculation error.",
+          "D — Incorrect. Did not account for Kelvin temperatures."
+        ]
+      }
+    ];
+
+    const STATE = {
+      mode: 'exam', // 'exam' (default) or 'practice'
+      currentQuestionIndex: 0,
+      userAnswers: {}, // { questionId: optionIndex }
+      questionStatus: {}, // { questionId: 'not-visited' | 'not-answered' | 'answered' | 'marked' | 'marked-answered' }
+      selectedSubject: 'ALL',
+      filteredIndices: [], // indices in QUESTION_DATABASE
+      timerSeconds: 45 * 60, // 45 minutes
+      timerInterval: null,
+      isSubmitted: false,
+      negativeMarking: true, // configurable negative marking (+1 / -0.25)
+      initialSchemePromptDismissed: false
+    };
+
+    const LOCAL_STORAGE_KEY = 'PYQ_QUIZ_APP_THERMAL_PHYSICS_V2';
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSavedState();
+      buildDynamicSubjectFilter();
+      filterQuestionsBySubject();
+      updateDynamicTitles();
+      updateNegativeMarkingUI();
+      renderPaletteGrid();
+      displayQuestion(STATE.currentQuestionIndex);
+      startExamTimer();
+      updateLegendCounts();
+      checkInitialMarkingAlert();
+    });
+
+    let tempSelectedNegativeSetting = true;
+
+    function checkInitialMarkingAlert() {
+      const modal = document.getElementById('markingSchemeAlertModal');
+      if (!modal) return;
+      if (STATE.initialSchemePromptDismissed) {
+        modal.classList.add('hidden');
+      } else {
+        modal.classList.remove('hidden');
+        handleSchemeModalSelection(STATE.negativeMarking);
+      }
+    }
+
+    function handleSchemeModalSelection(enableNegative) {
+      tempSelectedNegativeSetting = enableNegative;
+      const withLabel = document.getElementById('schemeOptionWithNegativeLabel');
+      const withoutLabel = document.getElementById('schemeOptionNoNegativeLabel');
+      
+      if (enableNegative) {
+        if (withLabel) withLabel.className = 'flex items-start p-3.5 rounded-xl border-2 border-indigo-500 bg-indigo-50/50 cursor-pointer transition';
+        if (withoutLabel) withoutLabel.className = 'flex items-start p-3.5 rounded-xl border-2 border-slate-200 bg-white cursor-pointer transition hover:bg-slate-50';
+      } else {
+        if (withoutLabel) withoutLabel.className = 'flex items-start p-3.5 rounded-xl border-2 border-indigo-500 bg-indigo-50/50 cursor-pointer transition';
+        if (withLabel) withLabel.className = 'flex items-start p-3.5 rounded-xl border-2 border-slate-200 bg-white cursor-pointer transition hover:bg-slate-50';
+      }
+    }
+
+    function confirmInitialMarkingScheme() {
+      STATE.negativeMarking = tempSelectedNegativeSetting;
+      STATE.initialSchemePromptDismissed = true;
+      const modal = document.getElementById('markingSchemeAlertModal');
+      if (modal) modal.classList.add('hidden');
+      updateNegativeMarkingUI();
+      saveStateToLocalStorage();
+      displayQuestion(STATE.currentQuestionIndex);
+      showToast(STATE.negativeMarking ? 'Negative marking set: +1 for correct, -0.25 for incorrect' : 'Marking set: +1 for correct, 0 penalty');
+    }
+
+    function toggleNegativeMarking() {
+      STATE.negativeMarking = !STATE.negativeMarking;
+      updateNegativeMarkingUI();
+      saveStateToLocalStorage();
+      displayQuestion(STATE.currentQuestionIndex);
+      showToast(STATE.negativeMarking ? 'Negative marking enabled (-0.25 penalty)' : 'Negative marking disabled (0 penalty)');
+    }
+
+    function updateNegativeMarkingUI() {
+      const btn = document.getElementById('toggleNegativeMarkingBtn');
+      const statusText = document.getElementById('negToggleStatus');
+      const headerBadge = document.getElementById('negativeMarkingDisplayBadge');
+      const reportNegativeRule = document.getElementById('reportNegativeRuleText');
+
+      if (STATE.negativeMarking) {
+        if (btn) btn.className = 'px-2 py-0.5 rounded-md font-bold text-xs transition-all bg-rose-600 hover:bg-rose-700 text-white shadow-sm flex items-center gap-1';
+        if (statusText) statusText.textContent = 'ON (-0.25)';
+        if (headerBadge) {
+          headerBadge.innerHTML = '<i class="fa-solid fa-minus mr-1"></i>Negative: -0.25';
+          headerBadge.className = 'text-rose-700 font-semibold bg-rose-50 px-2 py-1 rounded border border-rose-200';
+        }
+        if (reportNegativeRule) reportNegativeRule.textContent = '-0.25 negative each';
+      } else {
+        if (btn) btn.className = 'px-2 py-0.5 rounded-md font-bold text-xs transition-all bg-slate-500 hover:bg-slate-600 text-white shadow-sm flex items-center gap-1';
+        if (statusText) statusText.textContent = 'OFF (None)';
+        if (headerBadge) {
+          headerBadge.innerHTML = '<i class="fa-solid fa-circle-check mr-1 text-slate-500"></i>Negative: None (0)';
+          headerBadge.className = 'text-slate-600 font-semibold bg-slate-100 px-2 py-1 rounded border border-slate-300';
+        }
+        if (reportNegativeRule) reportNegativeRule.textContent = '0 negative (Disabled)';
+      }
+    }
+
+    function updateDynamicTitles() {
+      const uniqueSubjects = [...new Set(QUESTION_DATABASE.map(q => q.subject))];
+      let displayTitle = "Previous Year Questions Assessment";
+      let displaySub = "Interactive PYQ Practice & CBT Assessment Platform";
+
+      if (uniqueSubjects.length === 1) {
+        displayTitle = `${uniqueSubjects[0]} Assessment`;
+        displaySub = `${uniqueSubjects[0]} — CBT Mock Examination`;
+      } else if (uniqueSubjects.length > 1) {
+        displayTitle = `${uniqueSubjects[0]} & More (${uniqueSubjects.length} Sections)`;
+        displaySub = `Comprehensive Examination — ${uniqueSubjects.join(", ")}`;
+      }
+
+      if (STATE.selectedSubject !== 'ALL') {
+        displayTitle = `${STATE.selectedSubject} Assessment`;
+        displaySub = `Section: ${STATE.selectedSubject} — Active Filter`;
+      }
+
+      const topTitle = document.getElementById('topDynamicTitle');
+      const topSubtitle = document.getElementById('topDynamicSubtitle');
+      const docTitle = document.getElementById('documentTitle');
+      const reportHeader = document.getElementById('resultModalHeaderTitle');
+
+      if (topTitle) topTitle.textContent = displayTitle;
+      if (topSubtitle) topSubtitle.textContent = displaySub;
+      if (docTitle) docTitle.textContent = `${displayTitle} | Interactive PYQ`;
+      if (reportHeader) reportHeader.textContent = `${displayTitle} Summary`;
+    }
+
+    function buildDynamicSubjectFilter() {
+      const select = document.getElementById('subjectFilterSelect');
+      if (!select) return;
+      select.innerHTML = '<option value="ALL">All Sections (Full Assessment)</option>';
+
+      const subjects = [...new Set(QUESTION_DATABASE.map(q => q.subject))];
+      subjects.forEach(sub => {
+        const opt = document.createElement('option');
+        opt.value = sub;
+        opt.textContent = `${sub} (${QUESTION_DATABASE.filter(q => q.subject === sub).length} Qs)`;
+        select.appendChild(opt);
+      });
+
+      select.value = STATE.selectedSubject;
+    }
+
+    function handleSubjectFilterChange(chosenSub) {
+      STATE.selectedSubject = chosenSub;
+      filterQuestionsBySubject();
+      updateDynamicTitles();
+      STATE.currentQuestionIndex = 0;
+      renderPaletteGrid();
+      displayQuestion(STATE.currentQuestionIndex);
+      updateLegendCounts();
+      saveStateToLocalStorage();
+      showToast(`Filter applied: ${chosenSub === 'ALL' ? 'All Sections' : chosenSub}`);
+    }
+
+    function filterQuestionsBySubject() {
+      if (STATE.selectedSubject === 'ALL') {
+        STATE.filteredIndices = QUESTION_DATABASE.map((_, idx) => idx);
+      } else {
+        STATE.filteredIndices = [];
+        QUESTION_DATABASE.forEach((q, idx) => {
+          if (q.subject === STATE.selectedSubject) {
+            STATE.filteredIndices.push(idx);
+          }
+        });
+      }
+      const paletteTotal = document.getElementById('paletteTotalQuestions');
+      if (paletteTotal) paletteTotal.textContent = STATE.filteredIndices.length;
+    }
+
+    function switchMode(newMode) {
+      STATE.mode = newMode;
+      const examBtn = document.getElementById('examModeBtn');
+      const practiceBtn = document.getElementById('practiceModeBtn');
+      const timerCard = document.getElementById('examTimerCard');
+      const feedbackBox = document.getElementById('practiceFeedbackBox');
+
+      if (newMode === 'exam') {
+        examBtn.className = "px-3 py-1.5 rounded-lg transition-all bg-blue-600 text-white shadow-sm flex items-center gap-1.5";
+        practiceBtn.className = "px-3 py-1.5 rounded-lg transition-all text-slate-300 hover:text-white flex items-center gap-1.5";
+        timerCard.classList.remove('hidden');
+        if (feedbackBox) feedbackBox.classList.add('hidden');
+        showToast('Switched to Exam Mode');
+      } else {
+        practiceBtn.className = "px-3 py-1.5 rounded-lg transition-all bg-emerald-600 text-white shadow-sm flex items-center gap-1.5";
+        examBtn.className = "px-3 py-1.5 rounded-lg transition-all text-slate-300 hover:text-white flex items-center gap-1.5";
+        timerCard.classList.add('hidden');
+        showToast('Switched to Practice Mode');
+      }
+
+      displayQuestion(STATE.currentQuestionIndex);
+      saveStateToLocalStorage();
+    }
+
+    function startExamTimer() {
+      if (STATE.timerInterval) clearInterval(STATE.timerInterval);
+      STATE.timerInterval = setInterval(() => {
+        if (STATE.timerSeconds > 0) {
+          STATE.timerSeconds--;
+          renderTimerDisplay();
+          if (STATE.timerSeconds % 10 === 0) saveStateToLocalStorage();
+        } else {
+          clearInterval(STATE.timerInterval);
+          finalizeExamSubmission();
+        }
+      }, 1000);
+      renderTimerDisplay();
+    }
+
+    function renderTimerDisplay() {
+      const minutes = Math.floor(STATE.timerSeconds / 60);
+      const seconds = STATE.timerSeconds % 60;
+      const timerElem = document.getElementById('timerDisplay');
+      if (timerElem) {
+        timerElem.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      }
+    }
+
+    function displayQuestion(filteredIdx) {
+      if (STATE.filteredIndices.length === 0) return;
+
+      if (filteredIdx < 0) filteredIdx = 0;
+      if (filteredIdx >= STATE.filteredIndices.length) filteredIdx = STATE.filteredIndices.length - 1;
+      STATE.currentQuestionIndex = filteredIdx;
+
+      const rawIndex = STATE.filteredIndices[filteredIdx];
+      const q = QUESTION_DATABASE[rawIndex];
+      const qId = q.id;
+
+      if (!STATE.questionStatus[qId] || STATE.questionStatus[qId] === 'not-visited') {
+        STATE.questionStatus[qId] = 'not-answered';
+      }
+
+      document.getElementById('currentQuestionNumber').textContent = filteredIdx + 1;
+      document.getElementById('activeSubjectBadge').textContent = q.subject;
+      document.getElementById('prevBtn').disabled = (filteredIdx === 0);
+
+      // Question Text
+      const textContainer = document.getElementById('questionTextContainer');
+      textContainer.innerHTML = `<span class="text-blue-700 font-bold mr-2">Q${filteredIdx + 1}.</span> ${q.question}`;
+
+      // Options Rendering
+      const optContainer = document.getElementById('optionsContainer');
+      optContainer.innerHTML = '';
+
+      const letters = ['A', 'B', 'C', 'D'];
+      q.options.forEach((optText, optIdx) => {
+        const isSelected = (STATE.userAnswers[qId] === optIdx);
+        const optCard = document.createElement('div');
+        
+        let cardStyle = 'flex items-center p-3.5 rounded-xl border-2 transition-all cursor-pointer select-none text-xs md:text-sm font-medium ';
+        
+        if (STATE.mode === 'practice' && STATE.userAnswers[qId] !== undefined) {
+          if (optIdx === q.answer) {
+            cardStyle += 'border-emerald-500 bg-emerald-50 text-emerald-950 font-bold';
+          } else if (isSelected && optIdx !== q.answer) {
+            cardStyle += 'border-rose-500 bg-rose-50 text-rose-950';
+          } else {
+            cardStyle += 'border-slate-200 bg-white text-slate-700 opacity-60';
+          }
+        } else {
+          if (isSelected) {
+            cardStyle += 'border-blue-600 bg-blue-50 text-blue-950 font-bold shadow-xs';
+          } else {
+            cardStyle += 'border-slate-200 bg-white hover:bg-slate-50 text-slate-800';
+          }
+        }
+
+        optCard.className = cardStyle;
+        optCard.onclick = () => selectOption(qId, optIdx);
+
+        optCard.innerHTML = `
+          <div class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs mr-3 ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700'}">
+            ${letters[optIdx]}
+          </div>
+          <div class="flex-1">${optText}</div>
+          ${isSelected ? '<i class="fa-solid fa-circle-check text-blue-600 text-base ml-2"></i>' : ''}
+        `;
+        optContainer.appendChild(optCard);
+      });
+
+      // Practice Mode Feedback Box
+      const feedbackBox = document.getElementById('practiceFeedbackBox');
+      if (STATE.mode === 'practice' && STATE.userAnswers[qId] !== undefined) {
+        feedbackBox.classList.remove('hidden');
+        document.getElementById('practiceExplanation').innerHTML = q.explanation;
+        
+        const isCorrect = STATE.userAnswers[qId] === q.answer;
+        const badge = document.getElementById('revealedStatusBadge');
+        if (isCorrect) {
+          badge.textContent = 'Correct Answer (+1)';
+          badge.className = 'text-xs px-2.5 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800';
+        } else {
+          badge.textContent = STATE.negativeMarking ? 'Incorrect Answer (-0.25)' : 'Incorrect Answer (0 marks)';
+          badge.className = 'text-xs px-2.5 py-0.5 rounded font-bold bg-rose-100 text-rose-800';
+        }
+
+        const breakdownContainer = document.getElementById('practiceOptionBreakdown');
+        breakdownContainer.innerHTML = '';
+        if (q.feedback && q.feedback.length > 0) {
+          q.feedback.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'p-2 rounded bg-white border border-slate-200 text-slate-700';
+            row.innerHTML = item;
+            breakdownContainer.appendChild(row);
+          });
+        }
+      } else {
+        feedbackBox.classList.add('hidden');
+      }
+
+      renderPaletteGrid();
+      updateLegendCounts();
+      typesetMath();
+    }
+
+    function selectOption(questionId, optIndex) {
+      STATE.userAnswers[questionId] = optIndex;
+      STATE.questionStatus[questionId] = 'answered';
+      displayQuestion(STATE.currentQuestionIndex);
+      saveStateToLocalStorage();
+    }
+
+    function saveAndNext() {
+      const q = QUESTION_DATABASE[STATE.filteredIndices[STATE.currentQuestionIndex]];
+      const qId = q.id;
+
+      if (STATE.userAnswers[qId] !== undefined) {
+        STATE.questionStatus[qId] = 'answered';
+      } else {
+        STATE.questionStatus[qId] = 'not-answered';
+      }
+
+      if (STATE.currentQuestionIndex < STATE.filteredIndices.length - 1) {
+        displayQuestion(STATE.currentQuestionIndex + 1);
+      } else {
+        displayQuestion(STATE.currentQuestionIndex);
+        showToast('Reached the last question in this section');
+      }
+      saveStateToLocalStorage();
+    }
+
+    function markForReviewAndNext() {
+      const q = QUESTION_DATABASE[STATE.filteredIndices[STATE.currentQuestionIndex]];
+      const qId = q.id;
+
+      if (STATE.userAnswers[qId] !== undefined) {
+        STATE.questionStatus[qId] = 'marked-answered';
+      } else {
+        STATE.questionStatus[qId] = 'marked';
+      }
+
+      if (STATE.currentQuestionIndex < STATE.filteredIndices.length - 1) {
+        displayQuestion(STATE.currentQuestionIndex + 1);
+      } else {
+        displayQuestion(STATE.currentQuestionIndex);
+      }
+      saveStateToLocalStorage();
+    }
+
+    function clearCurrentResponse() {
+      const q = QUESTION_DATABASE[STATE.filteredIndices[STATE.currentQuestionIndex]];
+      const qId = q.id;
+      delete STATE.userAnswers[qId];
+      STATE.questionStatus[qId] = 'not-answered';
+      displayQuestion(STATE.currentQuestionIndex);
+      saveStateToLocalStorage();
+      showToast('Response cleared');
+    }
+
+    function navigateQuestion(offset) {
+      const targetIdx = STATE.currentQuestionIndex + offset;
+      if (targetIdx >= 0 && targetIdx < STATE.filteredIndices.length) {
+        displayQuestion(targetIdx);
+      }
+    }
+
+    function renderPaletteGrid() {
+      const grid = document.getElementById('paletteGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      STATE.filteredIndices.forEach((rawIdx, localIdx) => {
+        const q = QUESTION_DATABASE[rawIdx];
+        const status = STATE.questionStatus[q.id] || 'not-visited';
+        const isCurrent = (localIdx === STATE.currentQuestionIndex);
+
+        const btn = document.createElement('button');
+        btn.onclick = () => displayQuestion(localIdx);
+        btn.textContent = localIdx + 1;
+
+        let statusClass = 'status-not-visited';
+        if (status === 'answered') statusClass = 'status-answered';
+        else if (status === 'not-answered') statusClass = 'status-not-answered';
+        else if (status === 'marked') statusClass = 'status-marked';
+        else if (status === 'marked-answered') statusClass = 'status-marked-answered';
+
+        btn.className = `w-8 h-8 md:w-9 md:h-9 text-xs font-bold flex items-center justify-center transition-transform hover:scale-105 ${statusClass} ${isCurrent ? 'ring-2 ring-blue-600 ring-offset-2' : ''}`;
+        grid.appendChild(btn);
+      });
+    }
+
+    function updateLegendCounts() {
+      let ans = 0, notAns = 0, notVis = 0, marked = 0, markedAns = 0;
+
+      STATE.filteredIndices.forEach(rawIdx => {
+        const qId = QUESTION_DATABASE[rawIdx].id;
+        const status = STATE.questionStatus[qId] || 'not-visited';
+        if (status === 'answered') ans++;
+        else if (status === 'not-answered') notAns++;
+        else if (status === 'marked') marked++;
+        else if (status === 'marked-answered') markedAns++;
+        else notVis++;
+      });
+
+      document.getElementById('legendAnsweredCount').textContent = ans;
+      document.getElementById('legendNotAnsweredCount').textContent = notAns;
+      document.getElementById('legendNotVisitedCount').textContent = notVis;
+      document.getElementById('legendMarkedCount').textContent = marked;
+      document.getElementById('legendMarkedAnsweredCount').textContent = markedAns;
+    }
+
+    function promptSubmitExam() {
+      let ans = 0, notAns = 0, notVis = 0, marked = 0;
+
+      QUESTION_DATABASE.forEach(q => {
+        const status = STATE.questionStatus[q.id] || 'not-visited';
+        if (status === 'answered' || status === 'marked-answered') ans++;
+        else if (status === 'not-answered') notAns++;
+        else if (status === 'marked') marked++;
+        else notVis++;
+      });
+
+      document.getElementById('confirmAnsweredCount').textContent = ans;
+      document.getElementById('confirmNotAnsweredCount').textContent = notAns;
+      document.getElementById('confirmMarkedCount').textContent = marked;
+      document.getElementById('confirmNotVisitedCount').textContent = notVis;
+
+      toggleSubmitModal(true);
+    }
+
+    function toggleSubmitModal(show) {
+      const modal = document.getElementById('submitConfirmationModal');
+      if (show) modal.classList.remove('hidden');
+      else modal.classList.add('hidden');
+    }
+
+    function finalizeExamSubmission() {
+      toggleSubmitModal(false);
+      STATE.isSubmitted = true;
+      if (STATE.timerInterval) clearInterval(STATE.timerInterval);
+
+      let correct = 0;
+      let incorrect = 0;
+      let unattempted = 0;
+
+      QUESTION_DATABASE.forEach(q => {
+        const ans = STATE.userAnswers[q.id];
+        if (ans === undefined) {
+          unattempted++;
+        } else if (ans === q.answer) {
+          correct++;
+        } else {
+          incorrect++;
+        }
+      });
+
+      const negPenalty = STATE.negativeMarking ? 0.25 : 0;
+      const rawTotalMarks = (correct * 1) - (incorrect * negPenalty);
+      const totalMarks = Math.round(rawTotalMarks * 100) / 100;
+      const maxPossibleMarks = QUESTION_DATABASE.length * 1;
+      const accuracy = (correct + incorrect) > 0 ? Math.round((correct / (correct + incorrect)) * 100) : 0;
+      const percentage = Math.max(0, Math.round((totalMarks / maxPossibleMarks) * 100));
+
+      // Populate Report Card
+      document.getElementById('reportScore').textContent = `${totalMarks} / ${maxPossibleMarks}`;
+      document.getElementById('reportPercentage').textContent = `${percentage}% Total Score`;
+      document.getElementById('reportCorrect').textContent = correct;
+      document.getElementById('reportIncorrect').textContent = incorrect;
+      document.getElementById('reportAccuracy').textContent = `${accuracy}%`;
+
+      // Subject performance breakdown table
+      const uniqueSubjects = [...new Set(QUESTION_DATABASE.map(q => q.subject))];
+      const tableBody = document.getElementById('subjectReportTableBody');
+      tableBody.innerHTML = '';
+
+      uniqueSubjects.forEach(sub => {
+        const subQuestions = QUESTION_DATABASE.filter(q => q.subject === sub);
+        let sCorrect = 0, sWrong = 0, sAttempted = 0;
+        
+        subQuestions.forEach(sq => {
+          const userAns = STATE.userAnswers[sq.id];
+          if (userAns !== undefined) {
+            sAttempted++;
+            if (userAns === sq.answer) sCorrect++;
+            else sWrong++;
+          }
+        });
+
+        const sScoreRaw = (sCorrect * 1) - (sWrong * negPenalty);
+        const sScore = Math.round(sScoreRaw * 100) / 100;
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-slate-200';
+        tr.innerHTML = `
+          <td class="p-3 font-medium text-slate-800">${sub}</td>
+          <td class="p-3">${subQuestions.length}</td>
+          <td class="p-3">${sAttempted}</td>
+          <td class="p-3 font-semibold text-emerald-600">${sCorrect}</td>
+          <td class="p-3 font-semibold text-rose-600">${sWrong}</td>
+          <td class="p-3 font-bold text-indigo-700">${sScore}</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+
+      document.getElementById('resultModal').classList.remove('hidden');
+    }
+
+    function closeResultModalAndReview() {
+      document.getElementById('resultModal').classList.add('hidden');
+      switchMode('practice');
+      displayQuestion(0);
+    }
+
+    function openQuestionPaperModal() {
+      const list = document.getElementById('paperOverviewList');
+      list.innerHTML = '';
+
+      QUESTION_DATABASE.forEach((q, idx) => {
+        const item = document.createElement('div');
+        item.className = 'p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs md:text-sm';
+        item.innerHTML = `
+          <div class="flex items-center justify-between font-bold text-slate-800">
+            <span>Q${idx + 1}. [${q.subject}]</span>
+            <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-200 text-slate-700">+1 / ${STATE.negativeMarking ? '-0.25' : '0'}</span>
+          </div>
+          <div class="text-slate-700">${q.question}</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1 text-xs text-slate-600">
+            <div><strong>A)</strong> ${q.options[0]}</div>
+            <div><strong>B)</strong> ${q.options[1]}</div>
+            <div><strong>C)</strong> ${q.options[2]}</div>
+            <div><strong>D)</strong> ${q.options[3]}</div>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+
+      document.getElementById('questionPaperModal').classList.remove('hidden');
+      typesetMath();
+    }
+
+    function closeQuestionPaperModal() {
+      document.getElementById('questionPaperModal').classList.add('hidden');
+    }
+
+    function openInstructionsModal() {
+      document.getElementById('instructionsModal').classList.remove('hidden');
+    }
+
+    function closeInstructionsModal() {
+      document.getElementById('instructionsModal').classList.add('hidden');
+    }
+
+    function saveStateToLocalStorage() {
+      const payload = {
+        mode: STATE.mode,
+        currentQuestionIndex: STATE.currentQuestionIndex,
+        userAnswers: STATE.userAnswers,
+        questionStatus: STATE.questionStatus,
+        timerSeconds: STATE.timerSeconds,
+        selectedSubject: STATE.selectedSubject,
+        negativeMarking: STATE.negativeMarking,
+        initialSchemePromptDismissed: STATE.initialSchemePromptDismissed
+      };
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
+    }
+
+    function loadSavedState() {
+      try {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          STATE.mode = parsed.mode || 'exam';
+          STATE.currentQuestionIndex = parsed.currentQuestionIndex || 0;
+          STATE.userAnswers = parsed.userAnswers || {};
+          STATE.questionStatus = parsed.questionStatus || {};
+          STATE.timerSeconds = parsed.timerSeconds !== undefined ? parsed.timerSeconds : 45 * 60;
+          STATE.selectedSubject = parsed.selectedSubject || 'ALL';
+          STATE.negativeMarking = parsed.negativeMarking !== undefined ? parsed.negativeMarking : true;
+          STATE.initialSchemePromptDismissed = parsed.initialSchemePromptDismissed || false;
+        }
+      } catch (e) {
+        console.warn('LocalStorage load error', e);
+      }
+    }
+
+    function resetExamProgress() {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      STATE.userAnswers = {};
+      STATE.questionStatus = {};
+      STATE.timerSeconds = 45 * 60;
+      STATE.currentQuestionIndex = 0;
+      STATE.initialSchemePromptDismissed = false;
+      QUESTION_DATABASE.forEach(q => {
+        STATE.questionStatus[q.id] = 'not-visited';
+      });
+      document.getElementById('resultModal').classList.add('hidden');
+      showToast('Exam reset successfully');
+      startExamTimer();
+      displayQuestion(0);
+      updateLegendCounts();
+      checkInitialMarkingAlert();
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toastNotification');
+      const text = document.getElementById('toastMessage');
+      if (!toast || !text) return;
+
+      text.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    function typesetMath() {
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise().catch(err => console.warn('MathJax typesetting error:', err));
+      }
+    }
+  </script>
+</body>
+</html>
