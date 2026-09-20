@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PYQ Interactive Quiz Hub</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#2563eb',
+              600: '#1d4ed8',
+              700: '#1e40af',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- MathJax for rendering LaTeX math equations -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' },
+      startup: {
+        pageReady: () => {
+          return MathJax.startup.defaultPageReady().then(() => {
+            if (window.renderMath) window.renderMath();
+          });
+        }
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
+  <style>
+    /* Custom scrollbar and animations */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.5); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(107, 114, 128, 0.8); }
+    .transition-all-custom { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white">
+  <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Title & Topic Badge -->
+      <div class="flex items-center space-x-3">
+        <div class="bg-brand-600 text-white p-2.5 rounded-xl shadow-md flex items-center justify-center">
+          <i class="fa-solid fa-graduation-cap text-lg"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg sm:text-xl text-slate-900 dark:text-white leading-tight">PYQ Quiz Hub</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Thermal Physics PYQ Series</p>
+        </div>
+      </div>
+
+      <!-- Controls & Stats Header -->
+      <div class="flex items-center space-x-2 sm:space-x-4">
+        <!-- Timer Badge (Exam Mode) -->
+        <div id="timerContainer" class="hidden flex items-center space-x-2 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900 font-mono text-sm font-semibold animate-pulse">
+          <i class="fa-regular fa-clock text-xs"></i>
+          <span id="timerDisplay">30:00</span>
+        </div>
+
+        <!-- Mode Indicator -->
+        <span id="modeBadge" class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+          <i class="fa-solid fa-lightbulb mr-1.5 text-[10px]"></i> Practice Mode
+        </span>
+
+        <!-- Theme Toggle -->
+        <button id="themeToggleBtn" onclick="toggleDarkMode()" class="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" title="Toggle Theme">
+          <i class="fa-solid fa-moon dark:hidden"></i>
+          <i class="fa-solid fa-sun hidden dark:block"></i>
+        </button>
+
+        <!-- Dynamic Subject Filter Mobile Button Toggle -->
+        <button id="mobilePaletteToggle" onclick="toggleSidebar()" class="lg:hidden p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700">
+          <i class="fa-solid fa-grip"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col lg:flex-row gap-6 overflow-hidden">
+    
+    <!-- LEFT PANEL: Question Area / Results Summary -->
+    <div id="mainContentPanel" class="flex-1 flex flex-col overflow-y-auto pr-1">
+      
+      <!-- MODE SELECTION BAR & FILTERS -->
+      <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6 flex flex-wrap items-center justify-between gap-4">
+        
+        <!-- Mode Switch Buttons -->
+        <div class="flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+          <button id="btnPracticeMode" onclick="setMode('practice')" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all-custom bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm">
+            <i class="fa-solid fa-book-open mr-1.5"></i> Practice Mode
+          </button>
+          <button id="btnExamMode" onclick="setMode('exam')" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all-custom text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">
+            <i class="fa-solid fa-stopwatch mr-1.5"></i> Exam Mode
+          </button>
+        </div>
+
+        <!-- Subject Filter Dropdown (Dynamically Extracted) -->
+        <div class="flex items-center space-x-2">
+          <label for="subjectSelect" class="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">Section:</label>
+          <select id="subjectSelect" onchange="filterBySubject(this.value)" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs sm:text-sm rounded-xl px-3 py-2 font-medium focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <!-- Dynamically populated options -->
+          </select>
+        </div>
+      </div>
+
+      <!-- QUESTION DISPLAY CARD CONTAINER -->
+      <div id="quizContainer" class="flex-1 flex flex-col">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex-1 flex flex-col justify-between overflow-hidden">
+          
+          <!-- Question Header & Badges -->
+          <div class="p-6 border-b border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <span id="qNumberBadge" class="px-3 py-1 bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 font-bold text-sm rounded-lg border border-brand-200 dark:border-brand-900">
+                Question 1
+              </span>
+              <span id="qSubjectBadge" class="text-xs font-semibold px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md">
+                Subject
+              </span>
+            </div>
+            
+            <button id="flagBtn" onclick="toggleBookmark()" class="flex items-center space-x-1.5 text-xs sm:text-sm font-medium text-slate-400 hover:text-amber-500 transition-colors">
+              <i class="fa-regular fa-bookmark" id="flagIcon"></i>
+              <span id="flagText">Mark for Review</span>
+            </button>
+          </div>
+
+          <!-- Question Body -->
+          <div class="p-6 sm:p-8 flex-1 overflow-y-auto space-y-6">
+            <!-- Question Text -->
+            <div id="questionText" class="text-base sm:text-lg font-medium text-slate-900 dark:text-slate-100 leading-relaxed">
+              Loading question...
+            </div>
+
+            <!-- Options Grid -->
+            <div id="optionsContainer" class="space-y-3 pt-2">
+              <!-- Rendered via JavaScript -->
+            </div>
+
+            <!-- Instant Solution & Feedback Box (Practice Mode) -->
+            <div id="solutionBox" class="hidden mt-6 p-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 space-y-4">
+              <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700/60 pb-3">
+                <span class="font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center">
+                  <i class="fa-solid fa-circle-info text-brand-500 mr-2"></i> Detailed Explanation
+                </span>
+                <span id="statusIndicator" class="text-xs font-semibold px-2.5 py-0.5 rounded-full"></span>
+              </div>
+              <div id="explanationText" class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed"></div>
+              
+              <!-- Option-by-Option Breakdown -->
+              <div id="optionFeedbackList" class="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-700/60 text-xs sm:text-sm"></div>
+            </div>
+          </div>
+
+          <!-- Footer Navigation Bar -->
+          <div class="p-4 sm:p-6 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3">
+            <button id="prevBtn" onclick="navigateQuestion(-1)" class="px-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-medium text-xs sm:text-sm hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed flex items-center shadow-sm">
+              <i class="fa-solid fa-chevron-left mr-2"></i> Previous
+            </button>
+
+            <div class="flex items-center space-x-2">
+              <button onclick="clearCurrentSelection()" class="px-3 py-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 text-xs sm:text-sm font-medium">
+                Clear Selection
+              </button>
+              <button id="submitQuizBtn" onclick="confirmSubmitQuiz()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-sm transition-all">
+                Submit Quiz
+              </button>
+            </div>
+
+            <button id="nextBtn" onclick="navigateQuestion(1)" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-medium text-xs sm:text-sm flex items-center shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">
+              Next <i class="fa-solid fa-chevron-right ml-2"></i>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="resultsContainer" class="hidden flex-1 flex-col space-y-6">
+        <div class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+          
+          <div class="text-center space-y-3 pb-6 border-b border-slate-200 dark:border-slate-700">
+            <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">Quiz Completed!</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Here is a comprehensive breakdown of your performance.</p>
+          </div>
+
+          <!-- Score Metrics Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 my-6">
+            <div class="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl text-center border border-slate-200 dark:border-slate-700">
+              <span class="block text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Total Score</span>
+              <span id="scoreMetric" class="text-2xl sm:text-3xl font-extrabold text-brand-600 dark:text-brand-400">0 / 0</span>
+            </div>
+            <div class="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl text-center border border-slate-200 dark:border-slate-700">
+              <span class="block text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Accuracy</span>
+              <span id="accuracyMetric" class="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">0%</span>
+            </div>
+            <div class="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl text-center border border-slate-200 dark:border-slate-700">
+              <span class="block text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Attempted</span>
+              <span id="attemptedMetric" class="text-2xl sm:text-3xl font-extrabold text-amber-600 dark:text-amber-400">0</span>
+            </div>
+            <div class="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl text-center border border-slate-200 dark:border-slate-700">
+              <span class="block text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Time Spent</span>
+              <span id="timeSpentMetric" class="text-2xl sm:text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">0m 0s</span>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex flex-wrap justify-center gap-4">
+            <button onclick="restartQuiz()" class="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm rounded-xl shadow-sm transition-all">
+              <i class="fa-solid fa-rotate-left mr-2"></i> Retake Quiz
+            </button>
+            <button onclick="toggleReviewMode()" class="px-6 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-semibold text-sm rounded-xl transition-all">
+              <i class="fa-solid fa-list-check mr-2"></i> Review All Answers
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Detailed Review List -->
+        <div id="detailedReviewContainer" class="space-y-4">
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white px-2">Detailed Question Review</h3>
+          <div id="reviewQuestionsList" class="space-y-4">
+            <!-- Dynamically populated review items -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="sidebarDrawer" class="w-full lg:w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-5 flex flex-col space-y-5 flex-shrink-0">
+      
+      <!-- Palette Header & Stats -->
+      <div>
+        <h3 class="font-bold text-slate-900 dark:text-white text-base mb-1">Question Palette</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Jump to any question quickly.</p>
+      </div>
+
+      <!-- Legend -->
+      <div class="grid grid-cols-2 gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 border-y border-slate-100 dark:border-slate-700/60 py-3">
+        <div class="flex items-center space-x-2">
+          <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+          <span>Answered (<span id="countAnswered">0</span>)</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+          <span>Bookmarked (<span id="countBookmarked">0</span>)</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+          <span>Not Visited (<span id="countNotVisited">0</span>)</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="w-3 h-3 rounded-full bg-slate-100 dark:bg-slate-700 border border-slate-400"></span>
+          <span>Unanswered (<span id="countUnanswered">0</span>)</span>
+        </div>
+      </div>
+
+      <!-- Question Grid Buttons -->
+      <div id="questionGrid" class="grid grid-cols-5 gap-2 overflow-y-auto max-h-72 lg:max-h-96 pr-1">
+        <!-- Rendered via JavaScript -->
+      </div>
+
+      <!-- Quick Action Footer -->
+      <div class="pt-2 border-t border-slate-100 dark:border-slate-700/60">
+        <button onclick="resetAllProgress()" class="w-full py-2 bg-slate-100 dark:bg-slate-700/60 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium text-xs rounded-xl transition-colors">
+          <i class="fa-solid fa-trash-can mr-1.5"></i> Clear Saved Progress
+        </button>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- CUSTOM NON-BLOCKING MODAL DIALOG -->
+  <div id="customModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center space-x-3">
+        <i id="modalIcon" class="fa-solid fa-circle-question text-2xl text-brand-600 dark:text-brand-400"></i>
+        <h3 id="modalTitle" class="text-lg font-bold text-slate-900 dark:text-white">Confirm Action</h3>
+      </div>
+      <p id="modalMessage" class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed"></p>
+      <div id="modalActions" class="flex items-center justify-end space-x-3 pt-2">
+        <button id="modalCancelBtn" onclick="closeCustomModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-medium transition-colors">
+          Cancel
+        </button>
+        <button id="modalConfirmBtn" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-sm">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const QUESTION_DATABASE = [
+      {
+        id: 1,
+        subject: "Thermal Physics",
+        question: "During an isothermal expansion of an ideal gas, the change in internal energy ($\\Delta U$) is:",
+        options: ["Positive", "Negative", "Zero", "Dependent on the work done"],
+        answer: 2,
+        explanation: "For an ideal gas, internal energy is purely a function of temperature ($U = f(T)$). In an isothermal process, the temperature remains constant ($\\Delta T = 0$), which means the change in internal energy $\\Delta U = 0$.",
+        feedback: [
+          "A — Incorrect. Internal energy remains constant, so the change is zero, not positive.",
+          "B — Incorrect. Internal energy does not decrease as temperature is held constant.",
+          "C — Correct! For an ideal gas in an isothermal process, $\\Delta U = 0$ because temperature is constant.",
+          "D — Incorrect. $\\Delta U$ is determined solely by temperature change, independent of work done."
+        ]
+      },
+      {
+        id: 2,
+        subject: "Thermal Physics",
+        question: "For an isothermal process, the first law of thermodynamics becomes:",
+        options: ["$\\Delta Q = \\Delta W$", "$\\Delta Q = \\Delta U$", "$\\Delta U = -\\Delta W$", "$\\Delta Q = 0$"],
+        answer: 0,
+        explanation: "The First Law of Thermodynamics is given by $\\Delta Q = \\Delta U + \\Delta W$. Since temperature is constant during an isothermal process, internal energy change $\\Delta U = 0$. Thus, $\\Delta Q = \\Delta W$.",
+        feedback: [
+          "A — Correct! Since $\\Delta U = 0$ in an isothermal process, heat added equals work done: $\\Delta Q = \\Delta W$.",
+          "B — Incorrect. This equation applies to an isochoric process where $\\Delta W = 0$.",
+          "C — Incorrect. This holds for an adiabatic compression process where $\\Delta Q = 0$.",
+          "D — Incorrect. $\\Delta Q = 0$ defines an adiabatic process."
+        ]
+      },
+      {
+        id: 3,
+        subject: "Thermal Physics",
+        question: "For an isochoric process, the work done is:",
+        options: ["$P \\Delta V$", "Zero", "$nRT \\ln \\frac{V_{2}}{V_{1}}$", "$C_{P} \\Delta T$"],
+        answer: 1,
+        explanation: "An isochoric process takes place at constant volume ($\\Delta V = 0$). Work done $W = \\int P \\, dV = P \\Delta V = 0$.",
+        feedback: [
+          "A — Incorrect. $P \\Delta V$ is the work done in an isobaric process.",
+          "B — Correct! Since volume is constant ($\\Delta V = 0$), the work done $W = P \\Delta V = 0$.",
+          "C — Incorrect. This expression represents work done during an isothermal process.",
+          "D — Incorrect. $C_P \\Delta T$ represents heat absorbed at constant pressure."
+        ]
+      },
+      {
+        id: 4,
+        subject: "Thermal Physics",
+        question: "A process occurring infinitely slowly is called:",
+        options: ["Adiabatic", "Quasi-static", "Isobaric", "Irreversible"],
+        answer: 1,
+        explanation: "A quasi-static process is an idealized process that occurs infinitely slowly such that the system remains in thermodynamic equilibrium with its surroundings at all moments.",
+        feedback: [
+          "A — Incorrect. Adiabatic means no heat exchange occurs.",
+          "B — Correct! A quasi-static process occurs infinitely slowly to maintain equilibrium.",
+          "C — Incorrect. Isobaric means constant pressure.",
+          "D — Incorrect. Infinitely slow processes are typically reversible, not irreversible."
+        ]
+      },
+      {
+        id: 5,
+        subject: "Thermal Physics",
+        question: "The entropy of the universe tends to:",
+        options: ["Decrease", "Remain constant", "Increase", "Vary randomly"],
+        answer: 2,
+        explanation: "According to the Second Law of Thermodynamics, real natural processes are irreversible, leading to a continual increase in the overall entropy of the universe ($\\Delta S_{\\text{univ}} > 0$).",
+        feedback: [
+          "A — Incorrect. Entropy of an isolated system/universe never decreases spontaneously.",
+          "B — Incorrect. Entropy remains constant only for ideal reversible processes.",
+          "C — Correct! Natural processes increase the disorder, so the entropy of the universe tends to increase.",
+          "D — Incorrect. Entropy change follows a directional trend (increasing), not random variation."
+        ]
+      },
+      {
+        id: 6,
+        subject: "Thermal Physics",
+        question: "The coefficient of performance (COP) of a refrigerator is always:",
+        options: ["> 1", "< 1", "= 1", "Zero"],
+        answer: 0,
+        explanation: "The coefficient of performance of a refrigerator is defined as $\\text{COP} = \\frac{Q_L}{W} = \\frac{T_C}{T_H - T_C}$. For typical operating temperatures, COP is greater than 1 (often between 2 and 5).",
+        feedback: [
+          "A — Correct! Standard refrigeration cycles have a COP greater than 1.",
+          "B — Incorrect. Efficiency of a heat engine is $< 1$, but COP of a refrigerator is typically $> 1$.",
+          "C — Incorrect. COP is not restricted to 1.",
+          "D — Incorrect. A operating refrigerator has a positive non-zero COP."
+        ]
+      },
+      {
+        id: 7,
+        subject: "Thermal Physics",
+        question: "A Carnot cycle consists of:",
+        options: [
+          "Two isothermals and two isobars",
+          "Two adiabatics and two isothermals",
+          "Two isochores and two isothermals",
+          "Two isobars and two adiabatics"
+        ],
+        answer: 1,
+        explanation: "The Carnot cycle consists of four reversible processes: two isothermal processes (expansion and compression) and two adiabatic processes (expansion and compression).",
+        feedback: [
+          "A — Incorrect. Carnot cycle does not involve isobaric (constant pressure) processes.",
+          "B — Correct! The cycle is made of two reversible isothermals and two reversible adiabatics.",
+          "C — Incorrect. It does not contain isochoric (constant volume) processes.",
+          "D — Incorrect. It contains isothermals and adiabatics, not isobars."
+        ]
+      },
+      {
+        id: 8,
+        subject: "Thermal Physics",
+        question: "The slope of an isothermal curve on a P-V diagram is:",
+        options: ["More steeper than adiabatic", "Less steep than adiabatic", "Equal to adiabatic", "Zero"],
+        answer: 1,
+        explanation: "The slope of an isothermal curve is $\\left(\\frac{dP}{dV}\\right)_{\\text{iso}} = -\\frac{P}{V}$, whereas the slope of an adiabatic curve is $\\left(\\frac{dP}{dV}\\right)_{\\text{adia}} = -\\gamma \\frac{P}{V}$. Since $\\gamma > 1$, adiabatic curves are steeper than isothermal curves.",
+        feedback: [
+          "A — Incorrect. Adiabatic curves are steeper than isothermal curves.",
+          "B — Correct! Isothermal curves are less steep than adiabatic curves by a factor of $\\gamma$.",
+          "C — Incorrect. Slopes differ by the heat capacity ratio $\\gamma$.",
+          "D — Incorrect. The slope is negative and non-zero."
+        ]
+      },
+      {
+        id: 9,
+        subject: "Thermal Physics",
+        question: "A Carnot engine operates between 500K and 300K. Its efficiency is:",
+        options: ["20%", "40%", "60%", "80%"],
+        answer: 1,
+        explanation: "Carnot efficiency $\\eta = 1 - \\frac{T_C}{T_H} = 1 - \\frac{300}{500} = 1 - 0.6 = 0.4$ or $40\\%$.",
+        feedback: [
+          "A — Incorrect. Check the calculation: $1 - 300/500 = 0.4 = 40\\%$.",
+          "B — Correct! $\\eta = (500 - 300)/500 = 200/500 = 40\\%$.",
+          "C — Incorrect. 60% would correspond to $T_C / T_H = 0.4$.",
+          "D — Incorrect. Re-check the temperature ratio."
+        ]
+      },
+      {
+        id: 10,
+        subject: "Thermal Physics",
+        question: "For an adiabatic expansion, if $P_{1}V_{1}^{\\gamma}=P_{2}V_{2}^{\\gamma}$ and $V_{2}=2V_{1}$, then $P_2 =$",
+        options: ["$P_1 / 2$", "$P_{1}/2^{\\gamma}$", "$2P_{1}$", "$P_{1}$"],
+        answer: 1,
+        explanation: "From $P_1 V_1^{\\gamma} = P_2 V_2^{\\gamma}$, we get $P_2 = P_1 \\left(\\frac{V_1}{V_2}\\right)^{\\gamma} = P_1 \\left(\\frac{V_1}{2V_1}\\right)^{\\gamma} = \\frac{P_1}{2^{\\gamma}}$.",
+        feedback: [
+          "A — Incorrect. This would be true if $\\gamma = 1$ (isothermal), but for adiabatic it depends on $\\gamma$.",
+          "B — Correct! Substituting $V_2 = 2V_1$ yields $P_2 = P_1 / 2^\\gamma$.",
+          "C — Incorrect. Pressure decreases during expansion.",
+          "D — Incorrect. Pressure cannot remain constant during expansion without heat addition."
+        ]
+      },
+      {
+        id: 11,
+        subject: "Thermal Physics",
+        question: "A refrigerator with $\\text{COP} = 5$ extracts 1000J of heat. The work input is:",
+        options: ["200J", "500J", "1000J", "5000J"],
+        answer: 0,
+        explanation: "$\\text{COP} = \\frac{Q_L}{W} \\implies W = \\frac{Q_L}{\\text{COP}} = \\frac{1000\\text{ J}}{5} = 200\\text{ J}$.",
+        feedback: [
+          "A — Correct! $W = 1000 / 5 = 200\\text{ J}$.",
+          "B — Incorrect. $1000 / 5 \\neq 500\\text{ J}$.",
+          "C — Incorrect. This would mean $\\text{COP} = 1$.",
+          "D — Incorrect. 5000J corresponds to multiplying heat by COP rather than dividing."
+        ]
+      },
+      {
+        id: 12,
+        subject: "Thermal Physics",
+        question: "The change in internal energy for an isochoric process where $Q=50\\text{J}$ is:",
+        options: ["0J", "50J", "-50J", "100J"],
+        answer: 1,
+        explanation: "For an isochoric process, volume is constant so work done $W = 0$. By the First Law $\\Delta U = Q - W = 50\\text{ J} - 0 = 50\\text{ J}$.",
+        feedback: [
+          "A — Incorrect. $\\Delta U = 0$ occurs in isothermal processes.",
+          "B — Correct! Since no work is done ($W=0$), all added heat increases internal energy: $\\Delta U = 50\\text{ J}$.",
+          "C — Incorrect. Heat is added ($+50\\text{ J}$), so internal energy increases.",
+          "D — Incorrect. Work done is zero, so internal energy change equals heat added."
+        ]
+      },
+      {
+        id: 13,
+        subject: "Thermal Physics",
+        question: "A gas does 100J of work in an isothermal expansion. The heat absorbed is:",
+        options: ["0J", "50J", "100J", "200J"],
+        answer: 2,
+        explanation: "In an isothermal process, $\\Delta U = 0$. Using the First Law of Thermodynamics $Q = \\Delta U + W = 0 + 100\\text{ J} = 100\\text{ J}$.",
+        feedback: [
+          "A — Incorrect. $Q=0$ corresponds to an adiabatic process.",
+          "B — Incorrect. Half the work is not lost.",
+          "C — Correct! In an isothermal process, heat absorbed equals work done ($Q = W = 100\\text{ J}$).",
+          "D — Incorrect. Heat absorbed matches work done 1:1."
+        ]
+      },
+      {
+        id: 14,
+        subject: "Thermal Physics",
+        question: "A \"perpetual motion machine of the second kind\" would violate the:",
+        options: [
+          "First Law of Thermodynamics",
+          "Second Law of Thermodynamics",
+          "Third Law of Thermodynamics",
+          "Zeroth Law of Thermodynamics"
+        ],
+        answer: 1,
+        explanation: "A perpetual motion machine of the second kind (PMM2) converts heat completely into mechanical work without any loss to a sink, violating the Kelvin-Planck statement of the Second Law of Thermodynamics.",
+        feedback: [
+          "A — Incorrect. PMM1 violates the First Law (creates energy out of nothing).",
+          "B — Correct! PMM2 violates the Second Law by assuming 100% conversion of heat to work.",
+          "C — Incorrect. Third law relates to absolute zero entropy.",
+          "D — Incorrect. Zeroth law defines temperature and thermal equilibrium."
+        ]
+      },
+      {
+        id: 15,
+        subject: "Thermal Physics",
+        question: "An ideal gas is taken from state A to state B through two different paths, 1 and 2. The change in internal energy:",
+        options: [
+          "is greater for path 1",
+          "is greater for path 2",
+          "is the same for both paths",
+          "depends on the work done"
+        ],
+        answer: 2,
+        explanation: "Internal energy $U$ is a state function. Therefore, $\\Delta U = U_B - U_A$ depends only on the initial and final states, independent of the path taken.",
+        feedback: [
+          "A — Incorrect. Path independent state functions do not depend on path.",
+          "B — Incorrect. Path independent state functions do not depend on path.",
+          "C — Correct! $\\Delta U$ depends only on end states A and B, so it is identical for all paths.",
+          "D — Incorrect. Work done depends on the path, but $\\Delta U$ does not."
+        ]
+      },
+      {
+        id: 16,
+        subject: "Thermal Physics",
+        question: "In a cyclic process, the net change in internal energy is:",
+        options: ["Positive", "Negative", "Zero", "Infinite"],
+        answer: 2,
+        explanation: "Because internal energy is a state function and a cyclic process returns the system to its initial state ($A \\to B \\to A$), the net change $\\Delta U = U_{\\text{final}} - U_{\\text{initial}} = 0$.",
+        feedback: [
+          "A — Incorrect. The final state equals the initial state.",
+          "B — Incorrect. The final state equals the initial state.",
+          "C — Correct! The system returns to its starting state, so $\\Delta U = 0$.",
+          "D — Incorrect. Internal energy is finite and unchanged overall."
+        ]
+      },
+      {
+        id: 17,
+        subject: "Thermal Physics",
+        question: "The Second Law of Thermodynamics states that heat cannot flow spontaneously from:",
+        options: ["Hot to cold", "Cold to hot", "High pressure to low pressure", "Low volume to high volume"],
+        answer: 1,
+        explanation: "The Clausius statement of the Second Law states that heat cannot spontaneously flow from a colder body to a hotter body without external work input.",
+        feedback: [
+          "A — Incorrect. Heat flows spontaneously from hot to cold.",
+          "B — Correct! Spontaneous heat transfer from cold to hot is impossible without work input.",
+          "C — Incorrect. Pressure gradient flow is governed by fluid mechanics.",
+          "D — Incorrect. Volume changes do not define spontaneous thermal direction."
+        ]
+      },
+      {
+        id: 18,
+        subject: "Thermal Physics",
+        question: "The Zeroth Law establishes the concept of:",
+        options: ["Energy conservation", "Thermal equilibrium", "Entropy", "Heat engines"],
+        answer: 1,
+        explanation: "The Zeroth Law states that if two systems are each in thermal equilibrium with a third system, they are in thermal equilibrium with each other, establishing the basis for temperature measurement.",
+        feedback: [
+          "A — Incorrect. First law establishes energy conservation.",
+          "B — Correct! Zeroth law defines thermal equilibrium and temperature.",
+          "C — Incorrect. Second law introduces entropy.",
+          "D — Incorrect. Second law governs heat engines."
+        ]
+      },
+      {
+        id: 19,
+        subject: "Thermal Physics",
+        question: "Which process is characterized by no heat exchange?",
+        options: ["Adiabatic", "Isothermal", "Isobaric", "Isochoric"],
+        answer: 0,
+        explanation: "An adiabatic process is one in which no heat enters or leaves the system ($Q = 0$).",
+        feedback: [
+          "A — Correct! An adiabatic process has zero heat exchange ($Q=0$).",
+          "B — Incorrect. Isothermal means constant temperature.",
+          "C — Incorrect. Isobaric means constant pressure.",
+          "D — Incorrect. Isochoric means constant volume."
+        ]
+      },
+      {
+        id: 20,
+        subject: "Thermal Physics",
+        question: "The entropy of an isolated system always:",
+        options: ["Increases or remains constant", "Decreases", "Becomes zero", "Fluctuates randomly"],
+        answer: 0,
+        explanation: "For an isolated system, reversible processes leave total entropy unchanged ($\\Delta S = 0$), while real irreversible processes increase entropy ($\\Delta S > 0$). Thus $\\Delta S \\ge 0$.",
+        feedback: [
+          "A — Correct! Entropy of isolated systems never decreases: $\\Delta S \\ge 0$.",
+          "B — Incorrect. Spontaneous entropy reduction in isolated systems violates the 2nd law.",
+          "C — Incorrect. Absolute entropy is zero only at absolute zero temperature (3rd law).",
+          "D — Incorrect. The law dictates a strict monotonic thermodynamic direction."
+        ]
+      },
+      {
+        id: 21,
+        subject: "Thermal Physics",
+        question: "On a T-S diagram, an isothermal process is represented by a:",
+        options: ["Horizontal line", "Vertical line", "Curved line", "Diagonal line"],
+        answer: 0,
+        explanation: "On a Temperature-Entropy ($T$-$S$) diagram, temperature $T$ is plotted on the vertical axis. A process with constant temperature ($T = \\text{constant}$) appears as a horizontal straight line.",
+        feedback: [
+          "A — Correct! Constant temperature corresponds to a horizontal line on a T-S plot.",
+          "B — Incorrect. Vertical line represents a constant entropy (isentropic/adiabatic) process.",
+          "C — Incorrect. Horizontal straight line is produced.",
+          "D — Incorrect. Diagonal lines represent processes where both T and S vary."
+        ]
+      },
+      {
+        id: 22,
+        subject: "Thermal Physics",
+        question: "The area under a T-S diagram represents:",
+        options: ["Heat transfer", "Work done", "Pressure change", "Internal energy"],
+        answer: 0,
+        explanation: "Since $dQ = T \\, dS$, integrating along a path $\\int T \\, dS$ yields the total heat transfer $Q$ during a reversible process.",
+        feedback: [
+          "A — Correct! $\\int T \\, dS$ equals heat transferred.",
+          "B — Incorrect. Area under a P-V diagram represents work done.",
+          "C — Incorrect. Pressure change is not represented by area under T-S curve.",
+          "D — Incorrect. Internal energy is a state property, not the area under T-S plot."
+        ]
+      },
+      {
+        id: 23,
+        subject: "Thermal Physics",
+        question: "On a T-S diagram, the work done in a reversible cycle is equal to:",
+        options: ["Area enclosed by the cycle", "Slope of the curve", "Entropy change", "Temperature difference"],
+        answer: 0,
+        explanation: "For any reversible cyclic process, net heat added equals net work done ($Q_{\\text{net}} = W_{\\text{net}}$). The net heat added is the enclosed area on a $T$-$S$ diagram.",
+        feedback: [
+          "A — Correct! The enclosed area on a T-S cycle equals net heat added = net work done.",
+          "B — Incorrect. Slope represents specific heat capacity characteristics.",
+          "C — Incorrect. Total entropy change over a complete cycle is zero.",
+          "D — Incorrect. Temperature difference alone does not equal work."
+        ]
+      },
+      {
+        id: 24,
+        subject: "Thermal Physics",
+        question: "A real engine operating between $T_{1}$ and $T_{2}$ will always have efficiency _____ a Carnot engine.",
+        options: ["Less than", "Greater than", "Equal to", "Unrelated to"],
+        answer: 0,
+        explanation: "According to Carnot's theorem, no real heat engine operating between two given thermal reservoirs can be more efficient than a Carnot engine operating between the same reservoirs due to irreversibilities.",
+        feedback: [
+          "A — Correct! Real engines suffer from losses, so efficiency is strictly less than Carnot efficiency.",
+          "B — Incorrect. Violates Carnot's principle.",
+          "C — Incorrect. Reaches Carnot efficiency only in the ideal reversible limit.",
+          "D — Incorrect. Carnot efficiency serves as the upper theoretical limit."
+        ]
+      },
+      {
+        id: 25,
+        subject: "Thermal Physics",
+        question: "During adiabatic free expansion of an ideal gas, the temperature change is:",
+        options: ["Positive", "Negative", "Zero", "Undefined"],
+        answer: 2,
+        explanation: "In free expansion against a vacuum, work done $W=0$. Since it is adiabatic, heat transfer $Q=0$. By the first law, $\\Delta U = 0$. For an ideal gas, $U$ depends only on $T$, so $\\Delta U = 0 \\implies \\Delta T = 0$.",
+        feedback: [
+          "A — Incorrect. Temperature does not rise.",
+          "B — Incorrect. For ideal gases (no intermolecular forces), temperature does not fall.",
+          "C — Correct! Free expansion of an ideal gas results in $\\Delta T = 0$.",
+          "D — Incorrect. The temperature change is well-defined and equals zero."
+        ]
+      },
+      {
+        id: 26,
+        subject: "Thermal Physics",
+        question: "Which law deals with efficiency of heat engines?",
+        options: ["First Law", "Second Law", "Third Law", "Zeroth Law"],
+        answer: 1,
+        explanation: "The Second Law of Thermodynamics (Kelvin-Planck statement) establishes that no heat engine can convert heat into work with 100% efficiency, placing a fundamental boundary on engine efficiency.",
+        feedback: [
+          "A — Incorrect. First law deals with conservation of energy.",
+          "B — Correct! The Second Law sets the limit on heat engine efficiency.",
+          "C — Incorrect. Third law relates to entropy at absolute zero.",
+          "D — Incorrect. Zeroth law defines temperature."
+        ]
+      },
+      {
+        id: 27,
+        subject: "Thermal Physics",
+        question: "The equation $f(P,V,T)=0$ is known as:",
+        options: ["Equation of motion", "Equation of state", "Equation of energy", "Equation of continuity"],
+        answer: 1,
+        explanation: "An equation connecting the thermodynamic state variables ($P, V, T$) of a substance in thermodynamic equilibrium is called an Equation of State (e.g., $PV = nRT$).",
+        feedback: [
+          "A — Incorrect. Equation of motion describes kinematics/dynamics (e.g., $F=ma$).",
+          "B — Correct! $f(P,V,T)=0$ is the general form of an Equation of State.",
+          "C — Incorrect. Energy equations relate internal energy to temperature/volume.",
+          "D — Incorrect. Equation of continuity relates fluid velocity and mass conservation."
+        ]
+      },
+      {
+        id: 28,
+        subject: "Thermal Physics",
+        question: "The third law of thermodynamics is also known as:",
+        options: ["Nernst's theorem", "Planck's hypothesis", "Carnot's principle", "Clausius' law"],
+        answer: 0,
+        explanation: "The Third Law of Thermodynamics states that the entropy of a pure crystalline substance approaches zero as temperature approaches absolute zero ($0\\text{ K}$), which was first formulated by Walther Nernst and is known as Nernst's Heat Theorem.",
+        feedback: [
+          "A — Correct! Third law is widely known as Nernst's theorem.",
+          "B — Incorrect. Planck's hypothesis relates to quantum energy quantization ($E=h\\nu$).",
+          "C — Incorrect. Carnot's principle deals with maximum engine efficiency.",
+          "D — Incorrect. Clausius statement is part of the Second Law."
+        ]
+      },
+      {
+        id: 29,
+        subject: "Thermal Physics",
+        question: "Find the efficiency of the Carnot engine working between the steam point and the ice point.",
+        options: ["26.71%", "28.81%", "26.81%", "21.81%"],
+        answer: 2,
+        explanation: "Steam point $T_H = 100^\\circ\\text{C} = 373.15\\text{ K}$, Ice point $T_C = 0^\\circ\\text{C} = 273.15\\text{ K}$. Efficiency $\\eta = 1 - \\frac{273.15}{373.15} = 1 - 0.7319 = 0.2681 = 26.81\\%$.",
+        feedback: [
+          "A — Incorrect. Close, but exact ratio $(373.15-273.15)/373.15 \\approx 0.2680$, rounded to 26.81%.",
+          "B — Incorrect. Re-verify the thermodynamic temperature conversion.",
+          "C — Correct! $\\eta = 1 - (273.15 / 373.15) = 26.81\\%$.",
+          "D — Incorrect. Calculation error."
+        ]
+      },
+      {
+        id: 30,
+        subject: "Thermal Physics",
+        question: "Two ends of a rod are kept at $127^{\\circ}\\text{C}$ and $227^{\\circ}\\text{C}$. When 2000 cal of heat flows in this rod, then the change in entropy is:",
+        options: ["$1.0 \\text{ cal/K}$", "$20 \\text{ cal/K}$", "$6.9 \\text{ cal/K}$", "$0.7 \\text{ cal/K}$"],
+        answer: 0,
+        explanation: "Hot end $T_1 = 227^\\circ\\text{C} = 500\\text{ K}$ loses $Q = 2000\\text{ cal}$. Cold end $T_2 = 127^\\circ\\text{C} = 400\\text{ K}$ gains $Q = 2000\\text{ cal}$. Total entropy change $\\Delta S = \\frac{Q}{T_2} - \\frac{Q}{T_1} = \\frac{2000}{400} - \\frac{2000}{500} = 5 - 4 = 1.0\\text{ cal/K}$.",
+        feedback: [
+          "A — Correct! $\\Delta S = (2000/400) - (2000/500) = 5 - 4 = 1.0\\text{ cal/K}$.",
+          "B — Incorrect. Convert temperatures to Kelvin ($500\\text{K}$ and $400\\text{K}$).",
+          "C — Incorrect. Check entropy addition math.",
+          "D — Incorrect. Double check temperature unit conversions."
+        ]
+      }
+    ];
+
+    let currentFilteredQuestions = [...QUESTION_DATABASE];
+    let currentIndex = 0;
+    let userAnswers = {}; // Map question id -> chosen option index
+    let bookmarkedQuestions = new Set();
+    let quizMode = 'practice'; // 'practice' or 'exam'
+    let timerInterval = null;
+    let timeRemaining = 30 * 60; // 30 mins in seconds for exam mode
+    let timeSpent = 0;
+    let isSubmitted = false;
+    let selectedSubject = 'ALL';
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSavedState();
+      initSubjectFilterDropdown();
+      filterBySubject(selectedSubject);
+      setMode(quizMode);
+      renderQuestionGrid();
+      displayQuestion();
+      setupTheme();
+    });
+
+    function renderMath() {
+      if (window.MathJax && MathJax.typesetPromise) {
+        MathJax.typesetPromise().catch(err => console.error("MathJax error:", err));
+      }
+    }
+
+    function initSubjectFilterDropdown() {
+      const selectEl = document.getElementById('subjectSelect');
+      // Extract unique subjects dynamically from database
+      const uniqueSubjects = ['ALL', ...new Set(QUESTION_DATABASE.map(q => q.subject))];
+      
+      selectEl.innerHTML = uniqueSubjects.map(sub => 
+        `<option value="${sub}">${sub === 'ALL' ? 'All Sections' : sub}</option>`
+      ).join('');
+      
+      selectEl.value = selectedSubject;
+    }
+
+    function filterBySubject(subject) {
+      selectedSubject = subject;
+      if (subject === 'ALL') {
+        currentFilteredQuestions = [...QUESTION_DATABASE];
+      } else {
+        currentFilteredQuestions = QUESTION_DATABASE.filter(q => q.subject === subject);
+      }
+      currentIndex = 0;
+      renderQuestionGrid();
+      displayQuestion();
+    }
+
+    function setMode(mode) {
+      quizMode = mode;
+      const practiceBtn = document.getElementById('btnPracticeMode');
+      const examBtn = document.getElementById('btnExamMode');
+      const timerContainer = document.getElementById('timerContainer');
+      const modeBadge = document.getElementById('modeBadge');
+
+      if (mode === 'practice') {
+        practiceBtn.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all-custom bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm";
+        examBtn.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all-custom text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200";
+        timerContainer.classList.add('hidden');
+        modeBadge.innerHTML = `<i class="fa-solid fa-lightbulb mr-1.5 text-[10px]"></i> Practice Mode`;
+        modeBadge.className = "hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300";
+        stopTimer();
+      } else {
+        examBtn.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all-custom bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm";
+        practiceBtn.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all-custom text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200";
+        timerContainer.classList.remove('hidden');
+        modeBadge.innerHTML = `<i class="fa-solid fa-stopwatch mr-1.5 text-[10px]"></i> Exam Mode`;
+        modeBadge.className = "hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300";
+        startTimer();
+      }
+      displayQuestion();
+    }
+
+    function startTimer() {
+      stopTimer();
+      timerInterval = setInterval(() => {
+        if (timeRemaining > 0) {
+          timeRemaining--;
+          timeSpent++;
+          updateTimerDisplay();
+        } else {
+          stopTimer();
+          showCustomModal({
+            title: "Time's Up!",
+            message: "The exam timer has expired. Your quiz will now be submitted automatically.",
+            iconClass: "fa-solid fa-clock text-2xl text-red-500",
+            showCancel: false,
+            confirmText: "View Results",
+            onConfirm: () => submitQuiz()
+          });
+          submitQuiz();
+        }
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+    }
+
+    function updateTimerDisplay() {
+      const minutes = Math.floor(timeRemaining / 60);
+      const seconds = timeRemaining % 60;
+      document.getElementById('timerDisplay').innerText = 
+        `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function displayQuestion() {
+      if (currentFilteredQuestions.length === 0) return;
+
+      const q = currentFilteredQuestions[currentIndex];
+      
+      // Update Headers & Badges
+      document.getElementById('qNumberBadge').innerText = `Question ${currentIndex + 1} of ${currentFilteredQuestions.length}`;
+      document.getElementById('qSubjectBadge').innerText = q.subject;
+
+      // Update Question Text
+      document.getElementById('questionText').innerHTML = q.question;
+
+      // Update Bookmark/Flag
+      const isBookmarked = bookmarkedQuestions.has(q.id);
+      document.getElementById('flagIcon').className = isBookmarked ? "fa-solid fa-bookmark text-amber-500" : "fa-regular fa-bookmark";
+      document.getElementById('flagText').innerText = isBookmarked ? "Bookmarked" : "Mark for Review";
+
+      // Render Options
+      const optionsContainer = document.getElementById('optionsContainer');
+      const selectedOpt = userAnswers[q.id];
+
+      optionsContainer.innerHTML = q.options.map((opt, idx) => {
+        const char = String.fromCharCode(65 + idx);
+        let btnClasses = "w-full p-4 rounded-xl border text-left font-medium text-xs sm:text-sm transition-all flex items-start space-x-3 cursor-pointer ";
+        
+        if (selectedOpt === idx) {
+          btnClasses += "border-brand-500 bg-brand-50/70 dark:bg-brand-950/40 text-brand-900 dark:text-brand-200 ring-2 ring-brand-500/30 ";
+        } else {
+          btnClasses += "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 ";
+        }
+
+        return `
+          <button onclick="selectOption(${idx})" class="${btnClasses}">
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg text-xs font-bold border ${selectedOpt === idx ? 'bg-brand-600 text-white border-brand-600' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600'}">
+              ${char}
+            </span>
+            <span class="flex-1 pt-0.5">${opt}</span>
+          </button>
+        `;
+      }).join('');
+
+      // Handle Solution Box (Practice Mode)
+      const solutionBox = document.getElementById('solutionBox');
+      if (quizMode === 'practice' && selectedOpt !== undefined) {
+        solutionBox.classList.remove('hidden');
+        document.getElementById('explanationText').innerHTML = q.explanation;
+
+        const isCorrect = selectedOpt === q.answer;
+        const statusIndicator = document.getElementById('statusIndicator');
+        statusIndicator.className = isCorrect ? "text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300" : "text-xs font-semibold px-2.5 py-0.5 rounded-full bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300";
+        statusIndicator.innerText = isCorrect ? "Correct Answer!" : "Incorrect Answer";
+
+        // Render option feedback
+        document.getElementById('optionFeedbackList').innerHTML = q.feedback.map((fb, idx) => {
+          const isThisOptionCorrect = idx === q.answer;
+          return `
+            <div class="p-2.5 rounded-lg border ${isThisOptionCorrect ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900 text-emerald-900 dark:text-emerald-300' : 'bg-slate-100/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400'}">
+              ${fb}
+            </div>
+          `;
+        }).join('');
+
+      } else {
+        solutionBox.classList.add('hidden');
+      }
+
+      // Update Navigation Buttons
+      document.getElementById('prevBtn').disabled = currentIndex === 0;
+      document.getElementById('nextBtn').disabled = currentIndex === currentFilteredQuestions.length - 1;
+
+      renderMath();
+      updatePaletteGrid();
+      saveState();
+    }
+
+    function selectOption(optIdx) {
+      if (isSubmitted) return;
+      const q = currentFilteredQuestions[currentIndex];
+      userAnswers[q.id] = optIdx;
+      displayQuestion();
+    }
+
+    function clearCurrentSelection() {
+      if (isSubmitted) return;
+      const q = currentFilteredQuestions[currentIndex];
+      delete userAnswers[q.id];
+      displayQuestion();
+    }
+
+    function toggleBookmark() {
+      const q = currentFilteredQuestions[currentIndex];
+      if (bookmarkedQuestions.has(q.id)) {
+        bookmarkedQuestions.delete(q.id);
+      } else {
+        bookmarkedQuestions.add(q.id);
+      }
+      displayQuestion();
+    }
+
+    function navigateQuestion(direction) {
+      const newIndex = currentIndex + direction;
+      if (newIndex >= 0 && newIndex < currentFilteredQuestions.length) {
+        currentIndex = newIndex;
+        displayQuestion();
+      }
+    }
+
+    function renderQuestionGrid() {
+      const gridContainer = document.getElementById('questionGrid');
+      gridContainer.innerHTML = currentFilteredQuestions.map((q, idx) => {
+        return `
+          <button id="paletteBtn_${q.id}" onclick="jumpToQuestion(${idx})" class="h-10 rounded-xl font-bold text-xs flex items-center justify-center transition-all border">
+            ${idx + 1}
+          </button>
+        `;
+      }).join('');
+      updatePaletteGrid();
+    }
+
+    function updatePaletteGrid() {
+      let answeredCount = 0;
+      let bookmarkedCount = 0;
+      let notVisitedCount = 0;
+      let unansweredCount = 0;
+
+      currentFilteredQuestions.forEach((q, idx) => {
+        const btn = document.getElementById(`paletteBtn_${q.id}`);
+        if (!btn) return;
+
+        const isAnswered = userAnswers[q.id] !== undefined;
+        const isBookmarked = bookmarkedQuestions.has(q.id);
+        const isCurrent = idx === currentIndex;
+
+        if (isAnswered) answeredCount++;
+        if (isBookmarked) bookmarkedCount++;
+
+        let btnClass = "h-10 rounded-xl font-bold text-xs flex items-center justify-center transition-all border ";
+
+        if (isCurrent) {
+          btnClass += "ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-slate-800 ";
+        }
+
+        if (isBookmarked) {
+          btnClass += "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-300 dark:border-amber-700";
+        } else if (isAnswered) {
+          btnClass += "bg-emerald-500 text-white border-emerald-600";
+        } else {
+          btnClass += "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:bg-slate-200";
+          unansweredCount++;
+        }
+
+        btn.className = btnClass;
+      });
+
+      document.getElementById('countAnswered').innerText = answeredCount;
+      document.getElementById('countBookmarked').innerText = bookmarkedCount;
+      document.getElementById('countNotVisited').innerText = currentFilteredQuestions.length - (answeredCount + bookmarkedCount);
+      document.getElementById('countUnanswered').innerText = unansweredCount;
+    }
+
+    function jumpToQuestion(idx) {
+      currentIndex = idx;
+      displayQuestion();
+    }
+
+    /* Modal Utility Functions */
+    function showCustomModal({ title, message, iconClass, showCancel = true, confirmText = 'Confirm', onConfirm }) {
+      const modal = document.getElementById('customModal');
+      document.getElementById('modalTitle').innerText = title || 'Confirmation';
+      document.getElementById('modalMessage').innerText = message || '';
+      document.getElementById('modalIcon').className = iconClass || 'fa-solid fa-circle-question text-2xl text-brand-600';
+      
+      const cancelBtn = document.getElementById('modalCancelBtn');
+      if (showCancel) {
+        cancelBtn.classList.remove('hidden');
+      } else {
+        cancelBtn.classList.add('hidden');
+      }
+      
+      const confirmBtn = document.getElementById('modalConfirmBtn');
+      confirmBtn.innerText = confirmText;
+      confirmBtn.onclick = () => {
+        closeCustomModal();
+        if (onConfirm) onConfirm();
+      };
+      
+      modal.classList.remove('hidden');
+    }
+
+    function closeCustomModal() {
+      document.getElementById('customModal').classList.add('hidden');
+    }
+
+    function confirmSubmitQuiz() {
+      let answeredInCurrent = 0;
+      currentFilteredQuestions.forEach(q => {
+        if (userAnswers[q.id] !== undefined) answeredInCurrent++;
+      });
+      const unans = currentFilteredQuestions.length - answeredInCurrent;
+
+      const msg = unans > 0 
+        ? `You have ${unans} unanswered question(s) out of ${currentFilteredQuestions.length}. Are you sure you want to submit?`
+        : "Are you sure you want to submit your quiz?";
+      
+      showCustomModal({
+        title: "Submit Quiz",
+        message: msg,
+        iconClass: "fa-solid fa-paper-plane text-2xl text-emerald-600 dark:text-emerald-400",
+        confirmText: "Yes, Submit",
+        onConfirm: () => submitQuiz()
+      });
+    }
+
+    function submitQuiz() {
+      isSubmitted = true;
+      stopTimer();
+
+      let correctCount = 0;
+      let attemptedCount = 0;
+
+      currentFilteredQuestions.forEach(q => {
+        if (userAnswers[q.id] !== undefined) {
+          attemptedCount++;
+          if (userAnswers[q.id] === q.answer) {
+            correctCount++;
+          }
+        }
+      });
+
+      const totalQuestions = currentFilteredQuestions.length;
+      const accuracy = attemptedCount > 0 ? Math.round((correctCount / attemptedCount) * 100) : 0;
+
+      // Update Metrics UI
+      document.getElementById('scoreMetric').innerText = `${correctCount} / ${totalQuestions}`;
+      document.getElementById('accuracyMetric').innerText = `${accuracy}%`;
+      document.getElementById('attemptedMetric').innerText = `${attemptedCount} / ${totalQuestions}`;
+      
+      const mins = Math.floor(timeSpent / 60);
+      const secs = timeSpent % 60;
+      document.getElementById('timeSpentMetric').innerText = `${mins}m ${secs}s`;
+
+      // Hide Quiz Container, Show Results Container
+      document.getElementById('quizContainer').classList.add('hidden');
+      document.getElementById('resultsContainer').classList.remove('hidden');
+
+      renderDetailedReview();
+      saveState();
+    }
+
+    function renderDetailedReview() {
+      const reviewContainer = document.getElementById('reviewQuestionsList');
+      reviewContainer.innerHTML = currentFilteredQuestions.map((q, idx) => {
+        const userOpt = userAnswers[q.id];
+        const isCorrect = userOpt === q.answer;
+        const isSkipped = userOpt === undefined;
+
+        let statusBadge = "";
+        if (isSkipped) {
+          statusBadge = `<span class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold rounded-md">Skipped</span>`;
+        } else if (isCorrect) {
+          statusBadge = `<span class="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-xs font-bold rounded-md">Correct</span>`;
+        } else {
+          statusBadge = `<span class="px-2.5 py-1 bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300 text-xs font-bold rounded-md">Incorrect</span>`;
+        }
+
+        return `
+          <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-sm text-brand-600 dark:text-brand-400">Question ${idx + 1}</span>
+              ${statusBadge}
+            </div>
+            
+            <p class="text-sm font-semibold text-slate-900 dark:text-white">${q.question}</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              ${q.options.map((opt, oIdx) => {
+                let cardClass = "p-3 rounded-lg border ";
+                if (oIdx === q.answer) {
+                  cardClass += "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-300 font-bold";
+                } else if (userOpt === oIdx && !isCorrect) {
+                  cardClass += "bg-red-50 dark:bg-red-950/40 border-red-300 dark:border-red-800 text-red-900 dark:text-red-300 line-through";
+                } else {
+                  cardClass += "bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400";
+                }
+
+                return `
+                  <div class="${cardClass}">
+                    <span class="font-bold mr-1.5">${String.fromCharCode(65 + oIdx)}.</span> ${opt}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+
+            <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700/60 text-xs space-y-2">
+              <span class="font-bold text-slate-800 dark:text-slate-200 block">Explanation:</span>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">${q.explanation}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      renderMath();
+    }
+
+    function restartQuiz() {
+      userAnswers = {};
+      isSubmitted = false;
+      timeSpent = 0;
+      timeRemaining = 30 * 60;
+      currentIndex = 0;
+      document.getElementById('resultsContainer').classList.add('hidden');
+      document.getElementById('quizContainer').classList.remove('hidden');
+      if (quizMode === 'exam') startTimer();
+      displayQuestion();
+    }
+
+    function toggleReviewMode() {
+      const rev = document.getElementById('detailedReviewContainer');
+      rev.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function saveState() {
+      const state = {
+        userAnswers,
+        bookmarkedQuestions: Array.from(bookmarkedQuestions),
+        quizMode,
+        timeRemaining,
+        selectedSubject
+      };
+      localStorage.setItem('pyq_quiz_state', JSON.stringify(state));
+    }
+
+    function loadSavedState() {
+      const saved = localStorage.getItem('pyq_quiz_state');
+      if (saved) {
+        try {
+          const state = JSON.parse(saved);
+          userAnswers = state.userAnswers || {};
+          bookmarkedQuestions = new Set(state.bookmarkedQuestions || []);
+          quizMode = state.quizMode || 'practice';
+          selectedSubject = state.selectedSubject || 'ALL';
+        } catch(e) {
+          console.error("Failed to restore saved quiz state", e);
+        }
+      }
+    }
+
+    function resetAllProgress() {
+      showCustomModal({
+        title: "Reset Progress",
+        message: "Are you sure you want to clear all your saved answers and bookmarked questions?",
+        iconClass: "fa-solid fa-triangle-exclamation text-2xl text-amber-500",
+        confirmText: "Yes, Clear All",
+        onConfirm: () => {
+          localStorage.removeItem('pyq_quiz_state');
+          userAnswers = {};
+          bookmarkedQuestions.clear();
+          displayQuestion();
+        }
+      });
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebarDrawer');
+      sidebar.classList.toggle('hidden');
+    }
+
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    }
+
+    function setupTheme() {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  </script>
+</body>
+</html>
